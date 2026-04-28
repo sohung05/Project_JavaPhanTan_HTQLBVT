@@ -221,12 +221,12 @@ BEGIN
     BEGIN
         INSERT INTO ChoNgoi (maChoNgoi, maToa, viTri, gia, moTa)
         VALUES (
-            RIGHT('00' + CAST(@maToaNumber AS NVARCHAR(2)), 2) + 
-            RIGHT('00' + CAST(@soGhe AS NVARCHAR(2)), 2),  -- Format: XXYY
+            RIGHT('000' + CAST(@maToaNumber AS NVARCHAR(10)), 3) + 
+            RIGHT('00' + CAST(@soGhe AS NVARCHAR(10)), 2),  -- Format: XXXYY
             @maToa,
             @soGhe,
             @giaGhe,
-            N'Ghế số ' + CAST(@soGhe AS NVARCHAR(3))
+            N'Ghế số ' + CAST(@soGhe AS NVARCHAR(10))
         );
         SET @soGhe = @soGhe + 1;
     END
@@ -551,6 +551,38 @@ VALUES ('KM0101202407', NULL, N'≥100 vé', 0.15);
 
 PRINT N'✅ Đã thêm 4 Khuyến mãi Hóa đơn (KMHD)';
 PRINT N'✅ Đã thêm 7 Chi tiết khuyến mãi vào ChiTietKhuyenMai';
+
+-- ========================================
+-- 14. HoaDon, Ve, ChiTietHoaDon (DỮ LIỆU MẪU ĐỂ TEST TRẢ VÉ)
+-- ========================================
+PRINT N'';
+PRINT N'🎫 Bắt đầu thêm dữ liệu Hóa đơn & Vé mẫu...';
+
+DECLARE @todayStr NVARCHAR(6) = FORMAT(GETDATE(), 'ddMMyy');
+DECLARE @maLT1 NVARCHAR(20) = 'LTSE1-' + @todayStr + '01'; -- Chuyến SE1 hôm nay
+DECLARE @maLT2 NVARCHAR(20) = 'LTSE3-' + @todayStr + '01'; -- Chuyến SE3 hôm nay
+
+-- Thêm 2 Hóa đơn mẫu
+INSERT INTO HoaDon (maHoaDon, maNhanVien, maKH, gioTao, ngayTao, tongTien, trangThai) VALUES 
+('HD001', 'NV24900001', 'KH001', GETDATE(), CAST(GETDATE() AS DATE), 400000.0, 1),
+('HD002', 'NV24900001', 'KH021', GETDATE(), CAST(GETDATE() AS DATE), 180000.0, 1);
+
+-- Thêm Vé cho HD001 (2 vé người lớn, đi tàu SE1, toa 1, ghế 1 & 2)
+INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
+('VE001', 'LV01', '123456789001', DATEADD(HOUR, 2, GETDATE()), 200000.0, 'KH001', '00101', @maLT1, 'T001', 1, N'Lê Minh Tuấn', '079123456789'),
+('VE002', 'LV01', '123456789002', DATEADD(HOUR, 2, GETDATE()), 200000.0, 'KH001', '00102', @maLT1, 'T001', 1, N'Lê Minh Tuấn', '079123456789');
+
+-- Thêm Vé cho HD002 (1 vé sinh viên, đi tàu SE3, toa 2, ghế 1)
+INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
+('VE003', 'LV02', '123456789003', DATEADD(HOUR, 5, GETDATE()), 180000.0, 'KH021', '01101', @maLT2, 'T011', 1, N'Phạm Thu Hà', '079123456769');
+
+-- Thêm ChiTietHoaDon để liên kết Vé vào Hóa đơn
+INSERT INTO ChiTietHoaDon (maHoaDon, maVe, soLuong, giaVe, mucGiam) VALUES 
+('HD001', 'VE001', 1, 200000.0, 0),
+('HD001', 'VE002', 1, 200000.0, 0),
+('HD002', 'VE003', 1, 200000.0, 20000.0);
+
+PRINT N'✅ Đã thêm 2 HoaDon, 3 Ve, 3 ChiTietHoaDon mẫu';
 
 -- ========================================
 -- HOÀN THÀNH

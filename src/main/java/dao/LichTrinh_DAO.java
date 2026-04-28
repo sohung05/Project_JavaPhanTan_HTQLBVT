@@ -20,19 +20,16 @@ public class LichTrinh_DAO {
 
     public List<LichTrinh> timLichTrinh(String tenGaDi, String tenGaDen, LocalDate ngayDi) {
         try {
-            // Sử dụng Native Query để giữ nguyên logic phức tạp của SQL gốc (hỗ trợ ga trung gian)
-            String sql = "SELECT DISTINCT lt.* " +
+            // Query trực tiếp từ LichTrinh + Ga (không cần bảng BangGioGa)
+            String sql = "SELECT lt.* " +
                          "FROM LichTrinh lt " +
-                         "JOIN BangGioGa bggDi ON bggDi.maLichTrinh = lt.maLichTrinh " +
-                         "JOIN Ga gaDiThucTe ON gaDiThucTe.maGa = bggDi.maGa " +
-                         "JOIN BangGioGa bggDen ON bggDen.maLichTrinh = lt.maLichTrinh " +
-                         "JOIN Ga gaDenThucTe ON gaDenThucTe.maGa = bggDen.maGa " +
-                         "WHERE gaDiThucTe.tenGa LIKE ? " +
-                         "  AND gaDenThucTe.tenGa LIKE ? " +
+                         "JOIN Ga gaDi ON gaDi.maGa = lt.maGaDi " +
+                         "JOIN Ga gaDen ON gaDen.maGa = lt.maGaDen " +
+                         "WHERE gaDi.tenGa LIKE ? " +
+                         "  AND gaDen.tenGa LIKE ? " +
                          "  AND CAST(lt.gioKhoiHanh AS DATE) = ? " +
                          "  AND lt.trangThai = 1 " +
-                         "  AND bggDi.thuTuGa < bggDen.thuTuGa " +
-                         "ORDER BY bggDi.gioDen";
+                         "ORDER BY lt.gioKhoiHanh";
 
             Query query = em.createNativeQuery(sql, LichTrinh.class);
             query.setParameter(1, "%" + tenGaDi + "%");
