@@ -41,8 +41,18 @@ public class ThongKeDoanhThu_DAO {
                 KhachHang kh = new KhachHang();
                 kh.setMaKH((String) row[2]);
 
-                LocalDateTime gioTao = row[3] != null ? ((Timestamp) row[3]).toLocalDateTime() : null;
-                LocalDateTime ngayTao = row[4] != null ? ((Timestamp) row[4]).toLocalDateTime() : null;
+                LocalDateTime gioTao = null;
+                if (row[3] != null) {
+                    if (row[3] instanceof Timestamp) gioTao = ((Timestamp) row[3]).toLocalDateTime();
+                    else if (row[3] instanceof java.sql.Date) gioTao = ((java.sql.Date) row[3]).toLocalDate().atStartOfDay();
+                }
+
+                LocalDateTime ngayTao = null;
+                if (row[4] != null) {
+                    if (row[4] instanceof Timestamp) ngayTao = ((Timestamp) row[4]).toLocalDateTime();
+                    else if (row[4] instanceof java.sql.Date) ngayTao = ((java.sql.Date) row[4]).toLocalDate().atStartOfDay();
+                }
+
                 boolean trangThai = row[6] != null && (Boolean) row[6];
 
                 HoaDon hd = new HoaDon();

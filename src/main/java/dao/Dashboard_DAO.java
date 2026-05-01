@@ -200,7 +200,7 @@ public class Dashboard_DAO {
         return ((double) (thangNay - thangTruocVe) / thangTruocVe) * 100;
     }
 
-    public Map<String, Double> getDoanhThuTheoTuyenThang12(LocalDate today) {
+    public Map<String, Double> getDoanhThuTheoTuyenTrongThang(int month, int year) {
         Map<String, Double> data = new LinkedHashMap<>();
         String sql = """
             SELECT t.maTuyen, SUM(cthd.giaVe * cthd.soLuong) AS doanhThu
@@ -210,14 +210,17 @@ public class Dashboard_DAO {
             JOIN ChiTietHoaDon cthd ON v.maVe = cthd.maVe
             JOIN HoaDon hd ON cthd.maHoaDon = hd.maHoaDon
             WHERE hd.trangThai = 1 AND v.trangThai = 1
-              AND MONTH(hd.gioTao) = 12 AND YEAR(hd.gioTao) = YEAR(GETDATE())
+              AND MONTH(hd.gioTao) = ? AND YEAR(hd.gioTao) = ?
             GROUP BY t.maTuyen
             ORDER BY doanhThu DESC
         """;
 
         try {
             @SuppressWarnings("unchecked")
-            List<Object[]> results = em.createNativeQuery(sql).getResultList();
+            List<Object[]> results = em.createNativeQuery(sql)
+                .setParameter(1, month)
+                .setParameter(2, year)
+                .getResultList();
             for (Object[] row : results) {
                 data.put((String) row[0], ((Number) row[1]).doubleValue());
             }

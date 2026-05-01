@@ -213,7 +213,7 @@ public class Gui_Dashboard extends JPanel {
 
 // ================= LẤY DỮ LIỆU =================
         Map<String, Double> doanhThuTheoTuyen =
-                dashboardDAO.getDoanhThuTheoTuyenThang12(today);
+                dashboardDAO.getDoanhThuTheoTuyenTrongThang(today.getMonthValue(), today.getYear());
 
 // ================= DATASET =================
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();

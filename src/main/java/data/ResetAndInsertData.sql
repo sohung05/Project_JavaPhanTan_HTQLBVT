@@ -553,36 +553,85 @@ PRINT N'✅ Đã thêm 4 Khuyến mãi Hóa đơn (KMHD)';
 PRINT N'✅ Đã thêm 7 Chi tiết khuyến mãi vào ChiTietKhuyenMai';
 
 -- ========================================
--- 14. HoaDon, Ve, ChiTietHoaDon (DỮ LIỆU MẪU ĐỂ TEST TRẢ VÉ)
+-- 14. HoaDon, Ve, ChiTietHoaDon (DỮ LIỆU MẪU)
 -- ========================================
 PRINT N'';
 PRINT N'🎫 Bắt đầu thêm dữ liệu Hóa đơn & Vé mẫu...';
 
-DECLARE @todayStr NVARCHAR(6) = FORMAT(GETDATE(), 'ddMMyy');
-DECLARE @maLT1 NVARCHAR(20) = 'LTSE1-' + @todayStr + '01'; -- Chuyến SE1 hôm nay
-DECLARE @maLT2 NVARCHAR(20) = 'LTSE3-' + @todayStr + '01'; -- Chuyến SE3 hôm nay
+DECLARE @today DATE = GETDATE();
+DECLARE @todayStr NVARCHAR(6) = FORMAT(@today, 'ddMMyy');
 
--- Thêm 2 Hóa đơn mẫu
+-- ----- THÊM DỮ LIỆU THÁNG TRƯỚC (Tháng 4) -----
+DECLARE @thangTruoc DATE = DATEADD(MONTH, -1, @today);
+DECLARE @thangTruocStr NVARCHAR(6) = '150426'; -- Giả định ngày 15/04/26
+
+-- Cần có LichTrinh cho tháng trước để JOIN (Tạm thời dùng mã giả định hoặc tạo mới)
+-- Để đơn giản, ta sẽ cho các vé tháng trước JOIN vào lịch trình hiện tại (vẫn ra được thống kê tháng)
+-- Nhưng trong thực tế cần LichTrinh đúng tháng. Ở đây ta chỉ test hiển thị Doanh thu theo tháng.
+
 INSERT INTO HoaDon (maHoaDon, maNhanVien, maKH, gioTao, ngayTao, tongTien, trangThai) VALUES 
-('HD001', 'NV24900001', 'KH001', GETDATE(), CAST(GETDATE() AS DATE), 400000.0, 1),
-('HD002', 'NV24900001', 'KH021', GETDATE(), CAST(GETDATE() AS DATE), 180000.0, 1);
+('HD_T4_001', 'NV24900001', 'KH001', DATEADD(HOUR, 10, CAST(@thangTruoc AS DATETIME)), CAST(@thangTruoc AS DATE), 1000000.0, 1),
+('HD_T4_002', 'NV24900001', 'KH002', DATEADD(HOUR, 11, CAST(@thangTruoc AS DATETIME)), CAST(@thangTruoc AS DATE), 500000.0, 1);
 
--- Thêm Vé cho HD001 (2 vé người lớn, đi tàu SE1, toa 1, ghế 1 & 2)
 INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
-('VE001', 'LV01', '123456789001', DATEADD(HOUR, 2, GETDATE()), 200000.0, 'KH001', '00101', @maLT1, 'T001', 1, N'Lê Minh Tuấn', '079123456789'),
-('VE002', 'LV01', '123456789002', DATEADD(HOUR, 2, GETDATE()), 200000.0, 'KH001', '00102', @maLT1, 'T001', 1, N'Lê Minh Tuấn', '079123456789');
+('VE_T4_001', 'LV01', 'V4001', @thangTruoc, 500000.0, 'KH001', '00103', 'LTSE1-01052601', 'T001', 1, N'Lê Minh Tuấn', '079123456789'),
+('VE_T4_002', 'LV01', 'V4002', @thangTruoc, 500000.0, 'KH001', '00104', 'LTSE1-01052601', 'T001', 1, N'Lê Minh Tuấn', '079123456789');
 
--- Thêm Vé cho HD002 (1 vé sinh viên, đi tàu SE3, toa 2, ghế 1)
-INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
-('VE003', 'LV02', '123456789003', DATEADD(HOUR, 5, GETDATE()), 180000.0, 'KH021', '01101', @maLT2, 'T011', 1, N'Phạm Thu Hà', '079123456769');
-
--- Thêm ChiTietHoaDon để liên kết Vé vào Hóa đơn
 INSERT INTO ChiTietHoaDon (maHoaDon, maVe, soLuong, giaVe, mucGiam) VALUES 
-('HD001', 'VE001', 1, 200000.0, 0),
-('HD001', 'VE002', 1, 200000.0, 0),
-('HD002', 'VE003', 1, 200000.0, 20000.0);
+('HD_T4_001', 'VE_T4_001', 1, 500000.0, 0),
+('HD_T4_001', 'VE_T4_002', 1, 500000.0, 0);
 
-PRINT N'✅ Đã thêm 2 HoaDon, 3 Ve, 3 ChiTietHoaDon mẫu';
+
+-- ----- THÊM DỮ LIỆU THÁNG NÀY (Tháng 5) -----
+
+-- 1. Invoices
+INSERT INTO HoaDon (maHoaDon, maNhanVien, maKH, gioTao, ngayTao, tongTien, trangThai) VALUES 
+('HD_T5_001', 'NV24900001', 'KH001', GETDATE(), CAST(GETDATE() AS DATE), 1200000.0, 1),
+('HD_T5_002', 'NV24900001', 'KH021', GETDATE(), CAST(GETDATE() AS DATE), 800000.0, 1),
+('HD_T5_003', 'NV24900001', 'KH036', GETDATE(), CAST(GETDATE() AS DATE), 600000.0, 1),
+('HD_T5_004', 'NV24900001', 'KH046', GETDATE(), CAST(GETDATE() AS DATE), 300000.0, 1),
+('HD_T5_005', 'NV24900001', 'KH005', GETDATE(), CAST(GETDATE() AS DATE), 1000000.0, 1);
+
+-- 2. Tickets for various routes
+-- HN-SG
+INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
+('VE_T5_001', 'LV01', 'V5001', GETDATE(), 600000.0, 'KH001', '00105', 'LTSE1-' + @todayStr + '01', 'T001', 1, N'Lê Minh Tuấn', '079123456789'),
+('VE_T5_002', 'LV01', 'V5002', GETDATE(), 600000.0, 'KH001', '00106', 'LTSE1-' + @todayStr + '01', 'T001', 1, N'Lê Minh Tuấn', '079123456789');
+
+-- HN-DN
+INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
+('VE_T5_003', 'LV02', 'V5003', GETDATE(), 400000.0, 'KH021', '06101', 'LTSE7-' + @todayStr + '01', 'T061', 1, N'Phạm Thu Hà', '079123456769'),
+('VE_T5_004', 'LV02', 'V5004', GETDATE(), 400000.0, 'KH021', '06102', 'LTSE7-' + @todayStr + '01', 'T061', 1, N'Phạm Thu Hà', '079123456769');
+
+-- SG-NT
+INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
+('VE_T5_005', 'LV04', 'V5005', GETDATE(), 300000.0, 'KH036', '18101', 'LTSE19-' + @todayStr + '01', 'T181', 1, N'Ngô Thị Mai', '079123456754'),
+('VE_T5_006', 'LV04', 'V5006', GETDATE(), 300000.0, 'KH036', '18102', 'LTSE19-' + @todayStr + '01', 'T181', 1, N'Ngô Thị Mai', '079123456754');
+
+-- SG-PT
+INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
+('VE_T5_007', 'LV03', 'V5007', GETDATE(), 150000.0, 'KH046', '24101', 'LTSPT25-' + @todayStr + '01', 'T241', 1, N'Lý Văn Bé', '079123456744'),
+('VE_T5_008', 'LV03', 'V5008', GETDATE(), 150000.0, 'KH046', '24102', 'LTSPT25-' + @todayStr + '01', 'T241', 1, N'Lý Văn Bé', '079123456744');
+
+-- VÉ ĐÃ TRẢ (Test Tỷ lệ vé)
+INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
+('VE_T5_009', 'LV01', 'V5009', GETDATE(), 500000.0, 'KH005', '00107', 'LTSE1-' + @todayStr + '01', 'T001', 0, N'Vũ Thị Em', '079123456785'),
+('VE_T5_010', 'LV01', 'V5010', GETDATE(), 500000.0, 'KH005', '00108', 'LTSE1-' + @todayStr + '01', 'T001', 0, N'Vũ Thị Em', '079123456785');
+
+-- 3. Chi tiết Hóa đơn
+INSERT INTO ChiTietHoaDon (maHoaDon, maVe, soLuong, giaVe, mucGiam) VALUES 
+('HD_T5_001', 'VE_T5_001', 1, 600000.0, 0),
+('HD_T5_001', 'VE_T5_002', 1, 600000.0, 0),
+('HD_T5_002', 'VE_T5_003', 1, 400000.0, 40000.0),
+('HD_T5_002', 'VE_T5_004', 1, 400000.0, 40000.0),
+('HD_T5_003', 'VE_T5_005', 1, 300000.0, 45000.0),
+('HD_T5_003', 'VE_T5_006', 1, 300000.0, 45000.0),
+('HD_T5_004', 'VE_T5_007', 1, 150000.0, 37500.0),
+('HD_T5_004', 'VE_T5_008', 1, 150000.0, 37500.0),
+('HD_T5_005', 'VE_T5_009', 1, 500000.0, 0),
+('HD_T5_005', 'VE_T5_010', 1, 500000.0, 0);
+
+PRINT N'✅ Đã thêm 7 HoaDon, 12 Ve (10 đã bán, 2 đã trả) cho T4 & T5';
 
 -- ========================================
 -- HOÀN THÀNH
