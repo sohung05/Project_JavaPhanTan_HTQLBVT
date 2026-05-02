@@ -559,6 +559,10 @@ public class Diglog_ThanhToan extends JDialog {
         donTreo.setSoLuongVe(soLuongVe);
         donTreo.setTongTien(tongTien);
         
+        // ⚡ Set ngày lập và giờ lập
+        donTreo.setNgayLap(java.time.LocalDateTime.now());
+        donTreo.setGioLap(java.time.LocalDateTime.now());
+        
         // ⚡ Lưu thông tin ga đi, ga đến và LichTrinh
         if (previousGui != null) {
             try {
@@ -671,11 +675,13 @@ public class Diglog_ThanhToan extends JDialog {
         
         final Gui_BanVe finalGuiBanVe = guiBanVeToReload;
         if (finalGuiBanVe != null) {
-            SwingUtilities.invokeLater(() -> {
                 System.out.println("🟡 Đang reload sơ đồ ghế sau khi TREO ĐƠN...");
                 finalGuiBanVe.reloadSoDoGhe();
+                
+                // ⚡ Cập nhật số lượng đơn treo lên nút ở Gui_BanVe
+                finalGuiBanVe.capNhatSoLuongDonTreo();
+                
                 System.out.println("✅ Đã reload sơ đồ ghế - ghế giữ chỗ hiển thị màu vàng!");
-            });
         }
         
         dispose();

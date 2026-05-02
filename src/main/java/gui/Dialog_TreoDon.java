@@ -34,8 +34,24 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
     }
     
     private void initCustomComponents() {
-        // Khởi tạo model cho table
-        modelTable = (DefaultTableModel) tblThongTin.getModel();
+        // Khởi tạo model cho table với cột ẩn Mã đơn treo
+        modelTable = new DefaultTableModel(
+            new Object [][] {},
+            new String [] {
+                "Mã đơn", "CCCD", "Họ tên", "Số điện thoại", "Ngày lập", "Giờ lập", "Số lượng vé", "Thời gian còn"
+            }
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        tblThongTin.setModel(modelTable);
+        
+        // Ẩn cột Mã đơn treo (index 0)
+        tblThongTin.getColumnModel().getColumn(0).setMinWidth(0);
+        tblThongTin.getColumnModel().getColumn(0).setMaxWidth(0);
+        tblThongTin.getColumnModel().getColumn(0).setPreferredWidth(0);
         
         // Load tất cả đơn treo khi mở dialog
         loadTatCaDonTreo();
@@ -64,6 +80,7 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
         
         for (DonTreoDat don : danhSach) {
             modelTable.addRow(new Object[]{
+                don.getMaDonTreo(), // Cột ẩn
                 don.getCccdNguoiDat() != null ? don.getCccdNguoiDat() : "",
                 don.getHoTenNguoiDat() != null ? don.getHoTenNguoiDat() : "",
                 don.getSdtNguoiDat() != null ? don.getSdtNguoiDat() : "",
@@ -87,10 +104,10 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
             return;
         }
         
-        // Update cột thời gian còn lại (cột index 6)
+        // Update cột thời gian còn lại (cột index 7 sau khi thêm mã đơn)
         for (int i = 0; i < danhSach.size() && i < modelTable.getRowCount(); i++) {
             DonTreoDat don = danhSach.get(i);
-            modelTable.setValueAt(don.getThoiGianConLaiFormatted(), i, 6);
+            modelTable.setValueAt(don.getThoiGianConLaiFormatted(), i, 7);
         }
     }
     
@@ -314,12 +331,14 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
         // Hiển thị kết quả
         for (DonTreoDat don : ketQua) {
             modelTable.addRow(new Object[]{
+                don.getMaDonTreo(),
                 don.getCccdNguoiDat() != null ? don.getCccdNguoiDat() : "",
                 don.getHoTenNguoiDat() != null ? don.getHoTenNguoiDat() : "",
                 don.getSdtNguoiDat() != null ? don.getSdtNguoiDat() : "",
                 don.getNgayLap() != null ? don.getNgayLap().format(dateFormatter) : "",
                 don.getGioLap() != null ? don.getGioLap().format(timeFormatter) : "",
-                don.getSoLuongVe()
+                don.getSoLuongVe(),
+                don.getThoiGianConLaiFormatted()
             });
         }
         
@@ -343,19 +362,11 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
             return;
         }
         
-        // Lấy thông tin từ dòng được chọn
-        String cccdChon = modelTable.getValueAt(selectedRow, 0).toString();
+        // Lấy mã đơn từ cột ẩn (index 0)
+        String maDonChon = modelTable.getValueAt(selectedRow, 0).toString();
         
         // Tìm đơn trong danh sách
-        List<DonTreoDat> danhSach = QuanLyDonTreo.layDanhSachDonTreo();
-        DonTreoDat donCanXuLy = null;
-        
-        for (DonTreoDat don : danhSach) {
-            if (don.getCccdNguoiDat() != null && don.getCccdNguoiDat().equals(cccdChon)) {
-                donCanXuLy = don;
-                break;
-            }
-        }
+        DonTreoDat donCanXuLy = QuanLyDonTreo.layDonTreo(maDonChon);
         
         if (donCanXuLy == null) {
             JOptionPane.showMessageDialog(this,
@@ -418,40 +429,33 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
             return;
         }
         
-        // Lấy thông tin từ dòng được chọn
-        String cccdChon = modelTable.getValueAt(selectedRow, 0).toString();
-        String hoTen = modelTable.getValueAt(selectedRow, 1).toString();
+        // Lấy mã đơn từ cột ẩn (index 0)
+        String maDonChon = modelTable.getValueAt(selectedRow, 0).toString();
+        String hoTen = modelTable.getValueAt(selectedRow, 2).toString(); // Index 2 là Họ tên sau khi thêm mã đơn
         
         // Xác nhận hủy
         int confirm = JOptionPane.showConfirmDialog(this,
             "Bạn có chắc muốn hủy đơn của:\n" +
             "Họ tên: " + hoTen + "\n" +
-            "CCCD: " + cccdChon + "?",
+            "Mã đơn: " + maDonChon + "?",
             "Xác nhận hủy",
             JOptionPane.YES_NO_OPTION,
             JOptionPane.QUESTION_MESSAGE);
         
         if (confirm == JOptionPane.YES_OPTION) {
-            // Tìm và xóa đơn
-            List<DonTreoDat> danhSach = QuanLyDonTreo.layDanhSachDonTreo();
-            for (DonTreoDat don : danhSach) {
-                if (don.getCccdNguoiDat() != null && don.getCccdNguoiDat().equals(cccdChon)) {
-                    // Xóa ghế giữ chỗ
-                    QuanLyGheGiuCho.xoaTatCaGheCuaDonTreo(don.getMaDonTreo());
-                    
-                    // Xóa đơn treo
-                    QuanLyDonTreo.xoaDonTreo(don.getMaDonTreo());
-                    
-                    // Reload table
-                    loadTatCaDonTreo();
-                    
-                    JOptionPane.showMessageDialog(this,
-                        "Đã hủy đơn thành công!",
-                        "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-            }
+            // Xóa ghế giữ chỗ
+            QuanLyGheGiuCho.xoaTatCaGheCuaDonTreo(maDonChon);
+            
+            // Xóa đơn treo
+            QuanLyDonTreo.xoaDonTreo(maDonChon);
+            
+            // Reload table
+            loadTatCaDonTreo();
+            
+            JOptionPane.showMessageDialog(this,
+                "Đã hủy đơn thành công!",
+                "Thông báo",
+                JOptionPane.INFORMATION_MESSAGE);
         }
     }//GEN-LAST:event_btnHuyDonActionPerformed
 

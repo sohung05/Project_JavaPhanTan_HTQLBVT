@@ -1,7 +1,7 @@
 package demo;
 
-import connectDB.connectDB;
 import gui.Gui_Login;
+import utils.ClientContext;
 
 import javax.swing.*;
 
@@ -34,24 +34,15 @@ public class LoginFrame extends JFrame {
     }
     
     public static void main(String[] args) {
-        // Kết nối database trước
+        // Kết nối RMI Server trước
         try {
-            if (connectDB.getConnection() != null) {
-                System.out.println("✅ Kết nối SQL Server thành công!");
-                System.out.println("✅ Kết nối database thành công!");
-            } else {
-                System.err.println("❌ Lỗi kết nối database!");
-                JOptionPane.showMessageDialog(null, 
-                    "Không thể kết nối đến cơ sở dữ liệu!\nVui lòng kiểm tra SQL Server.", 
-                    "Lỗi", 
-                    JOptionPane.ERROR_MESSAGE);
-                System.exit(1);
-            }
+            ClientContext.init();
+            System.out.println("✅ Kết nối RMI Server thành công!");
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, 
-                "Lỗi khi khởi tạo kết nối: " + e.getMessage(), 
-                "Lỗi", 
+                "Không thể kết nối đến RMI Server!\nVui lòng chắc chắn rằng app.Server đang chạy.", 
+                "Lỗi kết nối", 
                 JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }

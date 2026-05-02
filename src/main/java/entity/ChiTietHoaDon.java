@@ -14,7 +14,7 @@ import java.io.Serializable;
 @Entity
 @IdClass(ChiTietHoaDonId.class)
 @Table(name = "ChiTietHoaDon")
-public class ChiTietHoaDon implements Serializable {
+public class ChiTietHoaDon implements java.io.Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id

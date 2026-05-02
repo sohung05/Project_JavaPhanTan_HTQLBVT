@@ -15,6 +15,7 @@ import net.miginfocom.swing.MigLayout;
 import org.jdesktop.animation.timing.Animator;
 import org.jdesktop.animation.timing.TimingTarget;
 import org.jdesktop.animation.timing.TimingTargetAdapter;
+import utils.ClientContext;
 import utils.SessionManager;
 
 import java.awt.*;
@@ -298,21 +299,15 @@ public class Main extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     public static void main(String args[]) {
-        // ✅ Kết nối database trước khi chạy
+        // ✅ Kết nối RMI Server trước khi chạy GUI
         try {
-            if (connectDB.connectDB.getConnection() == null) {
-                javax.swing.JOptionPane.showMessageDialog(null, 
-                    "Không thể kết nối đến database!\nKiểm tra lại SQL Server và thông tin kết nối.",
-                    "Lỗi kết nối Database", 
-                    javax.swing.JOptionPane.ERROR_MESSAGE);
-                System.exit(1);
-            }
-            System.out.println("✅ Kết nối database thành công!");
+            ClientContext.init();
+            System.out.println("✅ Kết nối RMI Server thành công!");
         } catch (Exception e) {
             e.printStackTrace();
             javax.swing.JOptionPane.showMessageDialog(null, 
-                "Lỗi kết nối database: " + e.getMessage(),
-                "Lỗi", 
+                "Không thể kết nối đến RMI Server!\n" + e.getMessage(),
+                "Lỗi kết nối", 
                 javax.swing.JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }

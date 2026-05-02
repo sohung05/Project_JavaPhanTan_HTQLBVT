@@ -1,10 +1,10 @@
 package gui;
 
 import connectDB.connectDB;
-import dao.NhanVien_DAO;
-import dao.TaiKhoan_DAO;
 import entity.NhanVien;
 import entity.TaiKhoan;
+import service.ITaiKhoanService;
+import utils.ClientContext;
 import utils.SessionManager;
 
 import javax.swing.*;
@@ -16,8 +16,7 @@ import java.awt.*;
  */
 public class Gui_Login extends JPanel {
 
-    private TaiKhoan_DAO taiKhoanDAO;
-    private NhanVien_DAO nhanVienDAO;
+    private ITaiKhoanService taiKhoanService;
 
     // Biến để theo dõi trạng thái hiện/ẩn mật khẩu
     private boolean isPasswordVisible = false;
@@ -27,8 +26,7 @@ public class Gui_Login extends JPanel {
      */
     public Gui_Login() {
         initComponents();
-        taiKhoanDAO = new TaiKhoan_DAO();
-        nhanVienDAO = new NhanVien_DAO();
+        taiKhoanService = ClientContext.getTaiKhoanService();
 
         txtTaiKhoan.setText("admin");
         txtMatKhau.setText("123456");
@@ -230,31 +228,32 @@ public class Gui_Login extends JPanel {
             return;
         }
 
-        // 3. Kiểm tra DB
-        if (connectDB.getConnection() == null) {
-            JOptionPane.showMessageDialog(this, "Mất kết nối cơ sở dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        // 3. Skip local DB check (handled by RMI)
+        
+        // 4. Thực hiện đăng nhập qua RMI
+        try {
+            TaiKhoan tk = taiKhoanService.dangNhap(tenTaiKhoan, matKhau);
 
-        // 4. Thực hiện đăng nhập
-        TaiKhoan tk = taiKhoanDAO.dangNhap(tenTaiKhoan, matKhau);
+            if (tk != null) {
+                // Lấy trực tiếp NhanVien từ TaiKhoan (đã được Hibernate nạp)
+                NhanVien nv = tk.getNhanVien();
 
-        if (tk != null) {
-            // Lấy trực tiếp NhanVien từ TaiKhoan (đã được Hibernate nạp)
-            NhanVien nv = tk.getNhanVien();
+                if (nv != null) {
+                    // --- QUAN TRỌNG: Lưu vào Session ---
+                    SessionManager.getInstance().setNhanVienDangNhap(nv);
 
-            if (nv != null) {
-                // --- QUAN TRỌNG: Lưu vào Session ---
-                SessionManager.getInstance().setNhanVienDangNhap(nv);
-
-                // Mở màn hình chính
-                openMainFrame();
+                    // Mở màn hình chính
+                    openMainFrame();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Tài khoản không liên kết với nhân viên nào!", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                }
             } else {
-                JOptionPane.showMessageDialog(this, "Tài khoản không liên kết với nhân viên nào!", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Sai tên tài khoản hoặc mật khẩu!", "Đăng nhập thất bại", JOptionPane.ERROR_MESSAGE);
+                txtMatKhau.requestFocus();
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Sai tên tài khoản hoặc mật khẩu!", "Đăng nhập thất bại", JOptionPane.ERROR_MESSAGE);
-            txtMatKhau.requestFocus();
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối Server: " + e.getMessage());
         }
     }
 

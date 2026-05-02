@@ -10,7 +10,6 @@ import java.util.List;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = "danhSachVe")
 @Builder
@@ -55,10 +54,15 @@ public class DonTreoDat implements Serializable {
     @JoinColumn(name = "maLichTrinh")
     private LichTrinh lichTrinh;
 
+    public DonTreoDat() {
+        this.ngayLap = LocalDateTime.now();
+        this.gioLap = LocalDateTime.now();
+        this.danhSachVe = new ArrayList<>();
+    }
+    
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "maDonTreo")
-    @Builder.Default
-    private List<ThongTinVeTam> danhSachVe = new ArrayList<>();
+    private List<ThongTinVeTam> danhSachVe;
 
     public void themVe(ThongTinVeTam ve) {
         this.danhSachVe.add(ve);

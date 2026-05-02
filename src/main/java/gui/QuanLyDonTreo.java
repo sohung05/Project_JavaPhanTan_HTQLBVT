@@ -24,6 +24,15 @@ public class QuanLyDonTreo {
         if (donTreo.getMaDonTreo() == null || donTreo.getMaDonTreo().isEmpty()) {
             donTreo.setMaDonTreo("DT" + String.format("%03d", soThuTu++));
         }
+        
+        // ⚡ Tự động set ngày lập và giờ lập nếu chưa có
+        if (donTreo.getNgayLap() == null) {
+            donTreo.setNgayLap(java.time.LocalDateTime.now());
+        }
+        if (donTreo.getGioLap() == null) {
+            donTreo.setGioLap(java.time.LocalDateTime.now());
+        }
+        
         danhSachDonTreo.add(donTreo);
     }
     
@@ -106,6 +115,7 @@ public class QuanLyDonTreo {
      * Đếm số lượng đơn treo
      */
     public static int demSoLuong() {
+        xoaDonHetHan();
         return danhSachDonTreo.size();
     }
 }

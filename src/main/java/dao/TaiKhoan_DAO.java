@@ -107,7 +107,7 @@ public class TaiKhoan_DAO {
     public TaiKhoan dangNhap(String tenTaiKhoan, String matKhau) {
         try {
             TypedQuery<TaiKhoan> query = em.createQuery(
-                "SELECT tk FROM TaiKhoan tk WHERE tk.tenTaiKhoan = :ten AND tk.matKhau = :pass", TaiKhoan.class);
+                "SELECT tk FROM TaiKhoan tk JOIN FETCH tk.nhanVien WHERE tk.tenTaiKhoan = :ten AND tk.matKhau = :pass", TaiKhoan.class);
             query.setParameter("ten", tenTaiKhoan);
             query.setParameter("pass", matKhau);
             List<TaiKhoan> results = query.getResultList();

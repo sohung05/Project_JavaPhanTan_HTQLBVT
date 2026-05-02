@@ -1,7 +1,7 @@
 package gui;
 
-import dao.Dashboard_DAO;
-import connectDB.connectDB;
+import service.IDashboardService;
+import utils.ClientContext;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -46,7 +46,7 @@ import org.jfree.data.general.DefaultPieDataset;
 public class Gui_Dashboard extends JPanel {
 
     private JLabel lblDoanhThu, lblSoVe, lblKhachHang, lblKhuyenMai;
-    private Dashboard_DAO dashboardDAO;
+    private IDashboardService dashboardService;
     private JPanel panelChart;
     private JPanel pieChartVePanel;  // Panel chứa biểu đồ tròn tỷ lệ vé
     private JPanel rightPanel;       // Panel bên phải chứa các biểu đồ tròn
@@ -59,8 +59,7 @@ public class Gui_Dashboard extends JPanel {
 
     public Gui_Dashboard() {
         setLayout(new BorderLayout());
-        connectDB.getConnection();
-        dashboardDAO = new Dashboard_DAO();
+        dashboardService = ClientContext.getDashboardService();
 
         // ================= PANEL THỐNG KÊ =================
         JPanel panelStats = new JPanel(new GridLayout(1, 4, 20, 10));
@@ -96,15 +95,18 @@ public class Gui_Dashboard extends JPanel {
 
     // ================= LOAD DATA =================
     private void loadData() {
-        Map<String, Double> thongKe = dashboardDAO.getThongKeTongQuan();
-        int soKmSapHetHan = dashboardDAO.getSoKhuyenMaiSapHetHan(7);
+        try {
+            Map<String, Double> thongKe = dashboardService.getThongKeTongQuan();
+            int soKmSapHetHan = dashboardService.getSoKhuyenMaiSapHetHan(7);
 
-        lblDoanhThu.setText(String.format("%+.1f %% so với tháng trước", thongKe.getOrDefault("doanhThu", 0.0)));
-        lblSoVe.setText(String.format("%+.1f %% so với tháng trước", thongKe.getOrDefault("ptVeBan", 0.0)));
-        lblKhuyenMai.setText(String.format("%d khuyến mãi", soKmSapHetHan));
-      //  lblKhachHang.setText(String.format("%+.0f khách hàng mới ", thongKe.getOrDefault("ptKhachHang", 0.0)));
+            lblDoanhThu.setText(String.format("%+.1f %% so với tháng trước", thongKe.getOrDefault("doanhThu", 0.0)));
+            lblSoVe.setText(String.format("%+.1f %% so với tháng trước", thongKe.getOrDefault("ptVeBan", 0.0)));
+            lblKhuyenMai.setText(String.format("%d khuyến mãi", soKmSapHetHan));
 
-        loadChart();
+            loadChart();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -118,14 +120,15 @@ public class Gui_Dashboard extends JPanel {
 
 
     private void loadChart() {
-        int nam = LocalDate.now().getYear();
-        LocalDate today = LocalDate.now();
+        try {
+            int nam = LocalDate.now().getYear();
+            LocalDate today = LocalDate.now();
 
-        // ================= DATA =================
-        Map<Integer, Double> doanhThuTheoThang = dashboardDAO.getDoanhThuTheoThang(nam);
-        Map<Integer, Integer> soVeTheoThang = dashboardDAO.getSoVeTheoThang(nam);
-        Map<String, Double> thongKe = dashboardDAO.getThongKeNgay(today);
-        capNhatKhachHangMoi(thongKe, lblKhachHang);
+            // ================= DATA =================
+            Map<Integer, Double> doanhThuTheoThang = dashboardService.getDoanhThuTheoThang(nam);
+            Map<Integer, Integer> soVeTheoThang = dashboardService.getSoVeTheoThang(nam);
+            Map<String, Double> thongKe = dashboardService.getThongKeNgay(today);
+            capNhatKhachHangMoi(thongKe, lblKhachHang);
 
 
         DefaultCategoryDataset doanhThuDataset = new DefaultCategoryDataset();
@@ -213,7 +216,7 @@ public class Gui_Dashboard extends JPanel {
 
 // ================= LẤY DỮ LIỆU =================
         Map<String, Double> doanhThuTheoTuyen =
-                dashboardDAO.getDoanhThuTheoTuyenTrongThang(today.getMonthValue(), today.getYear());
+                dashboardService.getDoanhThuTheoTuyenTrongThang(today.getMonthValue(), today.getYear());
 
 // ================= DATASET =================
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
@@ -276,7 +279,7 @@ public class Gui_Dashboard extends JPanel {
         renderer.setDefaultItemLabelsVisible(true);
 
         // Pie chart
-        Map<String, Double> tk = dashboardDAO.getThongKeTongQuan();
+        Map<String, Double> tk = dashboardService.getThongKeTongQuan();
         pieChartVePanel = createPieChartPanel(
                 tk.getOrDefault("soVeBan", 0.0),
                 tk.getOrDefault("soVeTra", 0.0)
@@ -286,7 +289,7 @@ public class Gui_Dashboard extends JPanel {
 
         // ================= PIE CHART: TỶ LỆ VÉ THEO TUYẾN =================
         Map<String, Integer> soVeTheoTuyen =
-                dashboardDAO.getSoVeTheoTuyen(
+                dashboardService.getSoVeTheoTuyen(
                         LocalDate.now().getDayOfMonth(),
                         LocalDate.now().getMonthValue(),
                         8  // Lấy top 8 tuyến
@@ -321,6 +324,9 @@ public class Gui_Dashboard extends JPanel {
 
         panelChart.revalidate();
         panelChart.repaint();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // ================= CARD =================
@@ -377,7 +383,10 @@ public class Gui_Dashboard extends JPanel {
 
         // ================= TABLE =================
         // Mặc định load dữ liệu "Hôm nay"
-        Map<String, Integer> soChoConTrong = dashboardDAO.getSoChoNgoiConTrongTheoTuyen(LocalDate.now());
+        Map<String, Integer> soChoConTrong = new HashMap<>();
+        try {
+            soChoConTrong = dashboardService.getSoChoNgoiConTrongTheoTuyen(LocalDate.now());
+        } catch (Exception e) { e.printStackTrace(); }
         JTable tuyenTable = createTuyenTable(soChoConTrong);
 
         JScrollPane scrollPaneTuyen = new JScrollPane(tuyenTable);
@@ -412,7 +421,10 @@ public class Gui_Dashboard extends JPanel {
             }
 
             // Reload bảng với ngày lọc
-            Map<String, Integer> newData = dashboardDAO.getSoChoNgoiConTrongTheoTuyen(ngayLoc);
+            Map<String, Integer> newData = new HashMap<>();
+            try {
+                newData = dashboardService.getSoChoNgoiConTrongTheoTuyen(ngayLoc);
+            } catch (Exception ex) { ex.printStackTrace(); }
             JTable newTable = createTuyenTable(newData);
             scrollPaneTuyen.setViewportView(newTable);
             scrollPaneTuyen.revalidate();
@@ -480,15 +492,17 @@ public class Gui_Dashboard extends JPanel {
 
         modelTuyen.setRowCount(0);
 
-        Map<String, Integer> data =
-                dashboardDAO.getSoChoNgoiConTrongTheoTuyen(day, month);
+        try {
+            Map<String, Integer> data =
+                    dashboardService.getSoChoNgoiConTrongTheoTuyen(day, month);
 
-        for (Map.Entry<String, Integer> e : data.entrySet()) {
-            modelTuyen.addRow(new Object[]{
-                    e.getKey(),
-                    e.getValue()
-            });
-        }
+            for (Map.Entry<String, Integer> e : data.entrySet()) {
+                modelTuyen.addRow(new Object[]{
+                        e.getKey(),
+                        e.getValue()
+                });
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private JPanel createPieChartTuyenPanel(Map<String, Integer> soVeTheoTuyen) {
@@ -529,15 +543,17 @@ public class Gui_Dashboard extends JPanel {
         DefaultTableModel model = (DefaultTableModel) tuyenTable.getModel();
         model.setRowCount(0);
 
-        Map<String, Integer> data =
-                dashboardDAO.getSoChoNgoiConTrongTheoTuyen(day, month);
+        try {
+            Map<String, Integer> data =
+                    dashboardService.getSoChoNgoiConTrongTheoTuyen(day, month);
 
-        for (Map.Entry<String, Integer> entry : data.entrySet()) {
-            model.addRow(new Object[]{
-                    entry.getKey(),
-                    entry.getValue()
-            });
-        }
+            for (Map.Entry<String, Integer> entry : data.entrySet()) {
+                model.addRow(new Object[]{
+                        entry.getKey(),
+                        entry.getValue()
+                });
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
     
     /**
@@ -547,27 +563,29 @@ public class Gui_Dashboard extends JPanel {
         System.out.println("🔄 Refreshing Dashboard data...");
         
         // Reload dữ liệu thống kê tổng quan
-        Map<String, Double> thongKe = dashboardDAO.getThongKeTongQuan();
-        
-        // Cập nhật lại pie chart tỷ lệ vé
-        if (pieChartVePanel != null && rightPanel != null) {
-            JPanel newPieChartVePanel = createPieChartPanel(
-                    thongKe.getOrDefault("soVeBan", 0.0),
-                    thongKe.getOrDefault("soVeTra", 0.0)
-            );
+        try {
+            Map<String, Double> thongKe = dashboardService.getThongKeTongQuan();
             
-            // Thay thế panel cũ bằng panel mới
-            rightPanel.remove(pieChartVePanel);
-            rightPanel.add(newPieChartVePanel, BorderLayout.NORTH);
-            pieChartVePanel = newPieChartVePanel;
-            
-            // Refresh UI
-            rightPanel.revalidate();
-            rightPanel.repaint();
-            
-            System.out.println("✅ Dashboard refreshed - Vé bán: " + thongKe.getOrDefault("soVeBan", 0.0) 
-                    + ", Vé trả: " + thongKe.getOrDefault("soVeTra", 0.0));
-        }
+            // Cập nhật lại pie chart tỷ lệ vé
+            if (pieChartVePanel != null && rightPanel != null) {
+                JPanel newPieChartVePanel = createPieChartPanel(
+                        thongKe.getOrDefault("soVeBan", 0.0),
+                        thongKe.getOrDefault("soVeTra", 0.0)
+                );
+                
+                // Thay thế panel cũ bằng panel mới
+                rightPanel.remove(pieChartVePanel);
+                rightPanel.add(newPieChartVePanel, BorderLayout.NORTH);
+                pieChartVePanel = newPieChartVePanel;
+                
+                // Refresh UI
+                rightPanel.revalidate();
+                rightPanel.repaint();
+                
+                System.out.println("✅ Dashboard refreshed - Vé bán: " + thongKe.getOrDefault("soVeBan", 0.0) 
+                        + ", Vé trả: " + thongKe.getOrDefault("soVeTra", 0.0));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
 }

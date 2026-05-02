@@ -4,7 +4,8 @@
  */
 package gui;
 
-import dao.KhachHang_DAO;
+import service.IKhachHangService;
+import utils.ClientContext;
 import entity.KhachHang;
 
 import javax.swing.*;
@@ -20,13 +21,14 @@ import utils.JTableExporter;
 public class Gui_KhachHang extends JPanel {
 
     private DefaultTableModel modelKhachHang;
-    private KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+    private IKhachHangService khachHangService;
     private String maKHChon = null;
 
     /**
      * Creates new form Gui_KhachHang
      */
     public Gui_KhachHang() {
+        khachHangService = ClientContext.getKhachHangService();
         initComponents();
         modelKhachHang = (DefaultTableModel) tblKhachHang.getModel();
         loadData();
@@ -65,17 +67,19 @@ public class Gui_KhachHang extends JPanel {
     }
     private void loadData() {
         modelKhachHang.setRowCount(0);
-        List<KhachHang> ds = khachHangDAO.getAll();
-        for (KhachHang kh : ds) {
-            modelKhachHang.addRow(new Object[]{
-                    kh.getMaKH(),
-                    kh.getHoTen(),
-                    kh.getEmail(),
-                    kh.getSDT(),
-                    kh.getCCCD(),
-                    kh.getDoiTuong()
-            });
-        }
+        try {
+            List<KhachHang> ds = khachHangService.getAll();
+            for (KhachHang kh : ds) {
+                modelKhachHang.addRow(new Object[]{
+                        kh.getMaKH(),
+                        kh.getHoTen(),
+                        kh.getEmail(),
+                        kh.getSDT(),
+                        kh.getCCCD(),
+                        kh.getDoiTuong()
+                });
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
 
@@ -109,10 +113,12 @@ public class Gui_KhachHang extends JPanel {
         String base = "KH" + cccd.substring(Math.max(0, cccd.length() - 4));
         String ma = base;
         int i = 1;
-        while (khachHangDAO.exists(ma)) {
-            ma = base + "_" + i;
-            i++;
-        }
+        try {
+            while (khachHangService.exists(ma)) {
+                ma = base + "_" + i;
+                i++;
+            }
+        } catch (Exception e) { e.printStackTrace(); }
         return ma;
     }
 
@@ -389,39 +395,43 @@ public class Gui_KhachHang extends JPanel {
             doiTuong = null; // bỏ qua nếu người dùng để trống
         }
 
-        // Gọi DAO để tìm kiếm
-        List<KhachHang> ds = khachHangDAO.timKiem(cccd, hoTen, email, sdt, doiTuong);
+        // Gọi Service để tìm kiếm
+        try {
+            List<KhachHang> ds = khachHangService.timKiem(cccd, hoTen, email, sdt, doiTuong);
 
-        // Cập nhật lại bảng
-        DefaultTableModel model = (DefaultTableModel) tblKhachHang.getModel();
-        model.setRowCount(0); // xóa dữ liệu cũ
+            // Cập nhật lại bảng
+            DefaultTableModel model = (DefaultTableModel) tblKhachHang.getModel();
+            model.setRowCount(0); // xóa dữ liệu cũ
 
-        for (KhachHang kh : ds) {
-            model.addRow(new Object[]{
-                    kh.getMaKH(),
-                    kh.getHoTen(),
-                    kh.getEmail(),
-                    kh.getSDT(),
-                    kh.getCCCD(),
-                    kh.getDoiTuong()
-            });
-        }
+            for (KhachHang kh : ds) {
+                model.addRow(new Object[]{
+                        kh.getMaKH(),
+                        kh.getHoTen(),
+                        kh.getEmail(),
+                        kh.getSDT(),
+                        kh.getCCCD(),
+                        kh.getDoiTuong()
+                });
+            }
 
-        // Nếu không có kết quả
-        if (ds.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng phù hợp!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        }
+            // Nếu không có kết quả
+            if (ds.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng phù hợp!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
         KhachHang kh = getKhachHangFromForm();
         if (kh != null) {
-            if (khachHangDAO.sua(kh)) {
-                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadData();
-            } else {
-                JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng để cập nhật!");
-            }
+            try {
+                if (khachHangService.sua(kh)) {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+                    loadData();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng để cập nhật!");
+                }
+            } catch (Exception e) { e.printStackTrace(); }
         }
     }
 
