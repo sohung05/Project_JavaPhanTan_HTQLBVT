@@ -25,4 +25,81 @@ public class LichTrinhServiceImpl extends UnicastRemoteObject implements ILichTr
     public LichTrinh findById(String maLT) throws RemoteException {
         return em.find(LichTrinh.class, maLT);
     }
+
+    @Override
+    public List<LichTrinh> timLichTrinh(String tenGaDi, String tenGaDen, java.time.LocalDate ngayDi) throws RemoteException {
+        System.out.println("🔍 Đang tìm lịch trình: " + tenGaDi + " -> " + tenGaDen + " ngày " + ngayDi);
+        try {
+            String sql = "SELECT lt.* " +
+                         "FROM LichTrinh lt " +
+                         "JOIN Ga gaDi ON gaDi.maGa = lt.maGaDi " +
+                         "JOIN Ga gaDen ON gaDen.maGa = lt.maGaDen " +
+                         "WHERE gaDi.tenGa LIKE ? " +
+                         "  AND gaDen.tenGa LIKE ? " +
+                         "  AND CAST(lt.gioKhoiHanh AS DATE) = ? " +
+                         "  AND lt.trangThai = 1 " +
+                         "ORDER BY lt.gioKhoiHanh";
+
+            jakarta.persistence.Query query = em.createNativeQuery(sql, LichTrinh.class);
+            query.setParameter(1, "%" + tenGaDi + "%");
+            query.setParameter(2, "%" + tenGaDen + "%");
+            query.setParameter(3, java.sql.Date.valueOf(ngayDi));
+
+            List<LichTrinh> results = query.getResultList();
+            System.out.println("✅ Tìm thấy " + results.size() + " lịch trình phù hợp.");
+            return results;
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi khi tìm lịch trình: " + e.getMessage());
+            e.printStackTrace();
+            return new java.util.ArrayList<>();
+        }
+    }
+
+    @Override
+    public boolean insert(LichTrinh lt) throws RemoteException {
+        jakarta.persistence.EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            em.persist(lt);
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean update(LichTrinh lt) throws RemoteException {
+        jakarta.persistence.EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            em.merge(lt);
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean delete(String maLT) throws RemoteException {
+        jakarta.persistence.EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            LichTrinh lt = em.find(LichTrinh.class, maLT);
+            if (lt != null) {
+                lt.setTrangThai(false);
+            }
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

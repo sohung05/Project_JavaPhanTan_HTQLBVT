@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import javax.swing.*;
@@ -39,14 +40,12 @@ public class Gui_KhuyenMaiDoiTuong extends JPanel {
         KhuyenMaiDoiTuong_DAO dao = new KhuyenMaiDoiTuong_DAO();
         List<Object[]> dsKM = dao.getDanhSachKhuyenMaiDoiTuong();
 
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
 
-        DateTimeFormatter fmt =
-                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
         for (Object[] row : dsKM) {
-            LocalDateTime start = (LocalDateTime) row[3];
-            LocalDateTime end = (LocalDateTime) row[4];
+            LocalDateTime start = row[3] instanceof Timestamp ? ((Timestamp)row[3]).toLocalDateTime() : (LocalDateTime)row[3];
+            LocalDateTime end = row[4] instanceof Timestamp ? ((Timestamp)row[4]).toLocalDateTime() : (LocalDateTime)row[4];
 
             boolean trangThaiBool = (boolean) row[6];
 
@@ -67,6 +66,15 @@ public class Gui_KhuyenMaiDoiTuong extends JPanel {
 
             model.addRow(newRow);
         }
+    }
+
+    private LocalDate convertToLocalDate(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof LocalDate) return (LocalDate) obj;
+        if (obj instanceof LocalDateTime) return ((LocalDateTime) obj).toLocalDate();
+        if (obj instanceof java.sql.Date) return ((java.sql.Date) obj).toLocalDate();
+        if (obj instanceof java.sql.Timestamp) return ((java.sql.Timestamp) obj).toLocalDateTime().toLocalDate();
+        return null;
     }
 
     public Gui_KhuyenMaiDoiTuong() {
@@ -220,13 +228,13 @@ public class Gui_KhuyenMaiDoiTuong extends JPanel {
                         ma,
                         ten,
                         "KMKH",
-                        new java.sql.Timestamp(start.getTime()).toLocalDateTime(),
-                        new java.sql.Timestamp(end.getTime()).toLocalDateTime(),
+                        new Timestamp(start.getTime()).toLocalDateTime(),
+                        new Timestamp(end.getTime()).toLocalDateTime(),
                         true
                 );
 
                 // --- Thêm vào DB ---
-                boolean success = dao.themKhuyenMaiDoiTuong(km, doiTuong, chietKhau);
+                boolean success = dao.themKhuyenMaiDoiTuong(km, doiTuong.name(), chietKhau);
 
                 if (success) {
                     JOptionPane.showMessageDialog(this, "✅ Thêm khuyến mãi thành công!");
@@ -366,15 +374,16 @@ public class Gui_KhuyenMaiDoiTuong extends JPanel {
             java.sql.Date sqlNgayBD = new java.sql.Date(ngayBD.getTime());
             java.sql.Date sqlNgayKT = new java.sql.Date(ngayKT.getTime());
 
-            // Gọi DAO cập nhật (truyền Enum DoiTuong nếu DAO hỗ trợ, hoặc chuyển sang String)
+            // Gọi DAO cập nhật
             KhuyenMaiDoiTuong_DAO dao = new KhuyenMaiDoiTuong_DAO();
             boolean result = dao.capNhatKhuyenMaiDoiTuong(
                     maKMCu,
-                    tenMoi,
+                    maKMCu, // maMoi
+                    tenMoi, // ten
                     sqlNgayBD,
                     sqlNgayKT,
                     chietKhau / 100.0,
-                    doiTuong.name() // nếu DAO lưu dạng String
+                    doiTuong.name()
             );
 
             if (result) {
@@ -464,18 +473,17 @@ public class Gui_KhuyenMaiDoiTuong extends JPanel {
                     jTextField4.setText(String.format("%.0f", chietKhau * 100));
 
                     try {
-                        // ✅ Parse từ LocalDateTime
                         Object startObj = model.getValueAt(row, 3);
                         Object endObj = model.getValueAt(row, 4);
                         
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                         if (startObj instanceof LocalDateTime) {
-                            jDateChooser1.setDate(java.sql.Timestamp.valueOf((LocalDateTime) startObj));
-                            jDateChooser2.setDate(java.sql.Timestamp.valueOf((LocalDateTime) endObj));
+                            jDateChooser1.setDate(Timestamp.valueOf((LocalDateTime) startObj));
+                            jDateChooser2.setDate(Timestamp.valueOf((LocalDateTime) endObj));
                         } else {
                             // Nếu là String, parse với format đúng
                             String startStr = startObj.toString();
                             String endStr = endObj.toString();
-                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                             jDateChooser1.setDate(sdf.parse(startStr));
                             jDateChooser2.setDate(sdf.parse(endStr));
                         }

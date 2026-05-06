@@ -20,6 +20,10 @@ public class KhuyenMaiDoiTuong_DAO {
         this.em = new EntityManagerFactoryUtil().getEntityManager();
     }
 
+    public List<KhuyenMai> getTatCaKhuyenMaiDoiTuong() {
+        return locKhuyenMaiTheoDoiTuong(null, null, null);
+    }
+
     public List<Object[]> getDanhSachKhuyenMaiDoiTuong() {
         List<Object[]> list = new ArrayList<>();
 
@@ -64,7 +68,9 @@ public class KhuyenMaiDoiTuong_DAO {
         return list;
     }
 
-    public boolean themKhuyenMaiDoiTuong(KhuyenMai km, DoiTuong doiTuong, double chietKhau) {
+    public boolean themKhuyenMaiDoiTuong(KhuyenMai km, String doiTuongStr, double chietKhau) {
+        // Convert string to enum
+        DoiTuong doiTuong = DoiTuong.valueOf(doiTuongStr);
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
@@ -115,7 +121,7 @@ public class KhuyenMaiDoiTuong_DAO {
         }
     }
 
-    public boolean capNhatKhuyenMaiDoiTuong(String maCu, String ten, Date thoiGianBatDau, Date thoiGianKetThuc, double chietKhau, String dieuKien) {
+    public boolean capNhatKhuyenMaiDoiTuong(String maCu, String maMoi, String ten, Date thoiGianBatDau, Date thoiGianKetThuc, double chietKhau, String dieuKien) {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();

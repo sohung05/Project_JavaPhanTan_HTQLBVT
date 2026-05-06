@@ -23,11 +23,11 @@ public class HoaDon implements Serializable {
     @Column(name = "maHoaDon", length = 20)
     private String maHoaDon;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maNhanVien")
     private NhanVien nhanVien;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maKH")
     private KhachHang khachHang;
 
@@ -36,7 +36,7 @@ public class HoaDon implements Serializable {
     private double tongTien;
     private boolean trangThai;
 
-    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Builder.Default
     private List<ChiTietHoaDon> danhSachChiTiet = new ArrayList<>();
 

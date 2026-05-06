@@ -21,11 +21,11 @@ public class Ve implements Serializable {
     @Column(name = "maVe", length = 20)
     private String maVe;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maLoaiVe")
     private LoaiVe loaiVe;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maLichTrinh")
     private LichTrinh lichTrinh;
 
@@ -35,11 +35,11 @@ public class Ve implements Serializable {
     private LocalDateTime thoiGianLenTau;
     private double giaVe;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maKH")
     private KhachHang khachHang;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maToa")
     private Toa toa;
 
@@ -51,7 +51,7 @@ public class Ve implements Serializable {
     @Column(length = 20)
     private String soCCCD;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maChoNgoi")
     private ChoNgoi choNgoi;
 }

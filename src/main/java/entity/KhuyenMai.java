@@ -1,6 +1,7 @@
 package entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Transient;
 import lombok.*;
 
 import java.io.Serializable;
@@ -24,21 +25,20 @@ public class KhuyenMai implements Serializable {
     @Column(columnDefinition = "nvarchar(100)")
     private String tenKhuyenMai;
 
-    @Column(length = 10)
+    @Column(length = 20)
     private String loaiKhuyenMai;
 
-    private LocalDateTime thoiGianBatDau;
-    private LocalDateTime thoiGianKetThuc;
+    private java.time.LocalDateTime thoiGianBatDau;
+    private java.time.LocalDateTime thoiGianKetThuc;
     private boolean trangThai;
-    @Transient
-    private int soVe;
-    @Transient
+    
+    @Transient // Cột này nằm ở bảng ChiTietKhuyenMai, không có trong bảng KhuyenMai
     private double chietKhau;
+    
+    @Transient // Cột này nằm ở bảng ChiTietKhuyenMai (cột dieuKien), không có trong bảng KhuyenMai
+    private String doiTuongApDung; // Đổi lại đúng tên theo Class Diagram
 
-    @Transient
-    private String doiTuongApDung;
-
-    public KhuyenMai(String maKhuyenMai, String tenKhuyenMai, String loaiKhuyenMai, LocalDateTime thoiGianBatDau, LocalDateTime thoiGianKetThuc, boolean trangThai) {
+    public KhuyenMai(String maKhuyenMai, String tenKhuyenMai, String loaiKhuyenMai, java.time.LocalDateTime thoiGianBatDau, java.time.LocalDateTime thoiGianKetThuc, boolean trangThai) {
         this.maKhuyenMai = maKhuyenMai;
         this.tenKhuyenMai = tenKhuyenMai;
         this.loaiKhuyenMai = loaiKhuyenMai;

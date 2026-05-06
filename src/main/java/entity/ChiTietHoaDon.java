@@ -23,7 +23,7 @@ public class ChiTietHoaDon implements java.io.Serializable {
     private HoaDon hoaDon;
 
     @Id
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maVe")
     private Ve ve;
 

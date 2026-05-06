@@ -21,19 +21,19 @@ public class LichTrinh implements Serializable {
     @Column(name = "maLichTrinh", length = 20)
     private String maLichTrinh;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "soHieuTau")
     private ChuyenTau chuyenTau;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maTuyen")
     private Tuyen tuyen;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maGaDi")
     private Ga gaDi;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maGaDen")
     private Ga gaDen;
 

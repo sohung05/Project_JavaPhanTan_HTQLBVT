@@ -23,7 +23,7 @@ public class TaiKhoan implements Serializable {
     @Column(name = "passWord", length = 200)
     private String matKhau;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maNhanVien")
     private NhanVien nhanVien;
 

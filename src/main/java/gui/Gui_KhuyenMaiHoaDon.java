@@ -236,7 +236,7 @@ public class Gui_KhuyenMaiHoaDon extends JPanel {
                 );
 
                 int soVe = Integer.parseInt(soVeStr);
-                km.setSoVe(soVe);                 // LƯU CHUỖI
+                km.setDoiTuongApDung(soVeStr);                 // LƯU CHUỖI
                 km.setChietKhau(chietKhau / 100.0);  // lưu dạng 0.x
 
                 // === GỌI DAO LƯU VÀO CSDL ===

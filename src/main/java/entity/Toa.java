@@ -20,13 +20,13 @@ public class Toa implements Serializable {
     @Column(name = "maToa", length = 20)
     private String maToa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "soHieuTau")
     private ChuyenTau chuyenTau;
 
     private int soToa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maLoaiToa")
     private LoaiToa loaiToa;
 }

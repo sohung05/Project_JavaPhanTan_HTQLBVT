@@ -162,6 +162,58 @@ public class ThongKeLuotVe_DAO {
         return map;
     }
 
+    public Map<String, Integer> getSoVeTheoGa(int thang, int nam) {
+        Map<String, Integer> map = new HashMap<>();
+        String sql = """
+            SELECT g.tenGa, COUNT(ct.maVe) as soVe
+            FROM ChiTietHoaDon ct
+            JOIN HoaDon hd ON ct.maHoaDon = hd.maHoaDon
+            JOIN Ve v ON ct.maVe = v.maVe
+            JOIN LichTrinh lt ON v.maLichTrinh = lt.maLichTrinh
+            JOIN Ga g ON lt.maGaDen = g.maGa
+            WHERE MONTH(hd.ngayTao) = ? AND YEAR(hd.ngayTao) = ? AND hd.trangThai = 1
+            GROUP BY g.tenGa
+        """;
+        try {
+            @SuppressWarnings("unchecked")
+            List<Object[]> results = em.createNativeQuery(sql)
+                .setParameter(1, thang).setParameter(2, nam)
+                .getResultList();
+            for (Object[] row : results) {
+                map.put((String) row[0], ((Number) row[1]).intValue());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
+    public Map<String, Double> getDoanhThuTheoGa(int thang, int nam) {
+        Map<String, Double> map = new HashMap<>();
+        String sql = """
+            SELECT g.tenGa, SUM((ct.giaVe - ct.mucGiam) * ct.soLuong) as doanhThu
+            FROM ChiTietHoaDon ct
+            JOIN HoaDon hd ON ct.maHoaDon = hd.maHoaDon
+            JOIN Ve v ON ct.maVe = v.maVe
+            JOIN LichTrinh lt ON v.maLichTrinh = lt.maLichTrinh
+            JOIN Ga g ON lt.maGaDen = g.maGa
+            WHERE MONTH(hd.ngayTao) = ? AND YEAR(hd.ngayTao) = ? AND hd.trangThai = 1
+            GROUP BY g.tenGa
+        """;
+        try {
+            @SuppressWarnings("unchecked")
+            List<Object[]> results = em.createNativeQuery(sql)
+                .setParameter(1, thang).setParameter(2, nam)
+                .getResultList();
+            for (Object[] row : results) {
+                map.put((String) row[0], ((Number) row[1]).doubleValue());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
     public List<HoaDon> loadHoaDonTheoThangNam(int thang, int nam) {
         List<HoaDon> dsHoaDon = new ArrayList<>();
 

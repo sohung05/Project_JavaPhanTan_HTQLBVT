@@ -22,7 +22,7 @@ public class ChuyenTau implements Serializable {
 
     private double tocDo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maLoaiTau")
     private LoaiTau loaiTau;
 

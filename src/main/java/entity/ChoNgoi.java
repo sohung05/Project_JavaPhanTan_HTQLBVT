@@ -23,7 +23,7 @@ public class ChoNgoi implements Serializable {
     @Transient
     private String tenChoNgoi;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maToa")
     private Toa toa;
 

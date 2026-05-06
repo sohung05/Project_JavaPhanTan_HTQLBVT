@@ -99,8 +99,9 @@ public class Gui_Dashboard extends JPanel {
             Map<String, Double> thongKe = dashboardService.getThongKeTongQuan();
             int soKmSapHetHan = dashboardService.getSoKhuyenMaiSapHetHan(7);
 
-            lblDoanhThu.setText(String.format("%+.1f %% so với tháng trước", thongKe.getOrDefault("doanhThu", 0.0)));
-            lblSoVe.setText(String.format("%+.1f %% so với tháng trước", thongKe.getOrDefault("ptVeBan", 0.0)));
+            DecimalFormat df = new DecimalFormat("#,### ₫");
+            lblDoanhThu.setText(df.format(thongKe.getOrDefault("doanhThu", 0.0)));
+            lblSoVe.setText(String.format("%.0f vé", thongKe.getOrDefault("soVeBan", 0.0)));
             lblKhuyenMai.setText(String.format("%d khuyến mãi", soKmSapHetHan));
 
             loadChart();
@@ -221,11 +222,8 @@ public class Gui_Dashboard extends JPanel {
 // ================= DATASET =================
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
-        for (String maTuyen : danhSachTuyen) {
-            Double doanhThu = doanhThuTheoTuyen.get(maTuyen);
-            if (doanhThu != null && doanhThu > 0) {
-                dataset.addValue(doanhThu, "Doanh thu", maTuyen);
-            }
+        for (Map.Entry<String, Double> entry : doanhThuTheoTuyen.entrySet()) {
+            dataset.addValue(entry.getValue(), "Doanh thu", entry.getKey());
         }
 // ================= BAR CHART (NẰM NGANG) =================
         JFreeChart chart = ChartFactory.createBarChart(
@@ -446,14 +444,13 @@ public class Gui_Dashboard extends JPanel {
                 .sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue()))
                 .toList();
 
-        Object[][] data = new Object[allTuyen.size()][2];
-        for (int i = 0; i < allTuyen.size(); i++) {
-            data[i][0] = allTuyen.get(i).getKey();
-            data[i][1] = allTuyen.get(i).getValue(); // số ghế trống
+        DefaultTableModel model = new DefaultTableModel(columns, 0);
 
+        for (Map.Entry<String, Integer> entry : allTuyen) {
+            model.addRow(new Object[]{entry.getKey(), entry.getValue()});
         }
 
-        JTable table = new JTable(modelTuyen);
+        JTable table = new JTable(model);
         table.setRowHeight(25);
         table.setFillsViewportHeight(true);
         return table;
