@@ -1,4 +1,4 @@
-﻿-- ========================================
+-- ========================================
 -- HỆ THỐNG QUẢN LÝ VÉ TÀU - TẠO BẢNG
 -- File: 01_CreateTables.sql
 -- Mô tả: Tạo database và các bảng
@@ -195,6 +195,44 @@ CREATE TABLE ChiTietKhuyenMai(
   chietKhau   DECIMAL(18,2) NOT NULL DEFAULT 0,
   FOREIGN KEY (maHoaDon)    REFERENCES HoaDon(maHoaDon) ON DELETE CASCADE,
   FOREIGN KEY (maKhuyenMai) REFERENCES KhuyenMai(maKhuyenMai)
+);
+
+/* ============================================
+   📦 ĐƠN TREO TẠM
+============================================ */
+CREATE TABLE DonTreoDat(
+  maDonTreo     NVARCHAR(20) PRIMARY KEY,
+  cccdNguoiDat  NVARCHAR(20) NULL,
+  hoTenNguoiDat NVARCHAR(100) NULL,
+  sdtNguoiDat   NVARCHAR(15) NULL,
+  emailNguoiDat NVARCHAR(100) NULL,
+  ngayLap       DATETIME2(0) NULL,
+  gioLap        DATETIME2(0) NULL,
+  soLuongVe     INT DEFAULT 0,
+  tongTien      DECIMAL(18,2) DEFAULT 0,
+  ghiChu        NVARCHAR(255) NULL,
+  gaDi          NVARCHAR(100) NULL,
+  gaDen         NVARCHAR(100) NULL,
+  ngayDi        NVARCHAR(50) NULL,
+  maLichTrinh   NVARCHAR(20) NULL,
+  FOREIGN KEY (maLichTrinh) REFERENCES LichTrinh(maLichTrinh)
+);
+
+CREATE TABLE ThongTinVeTam(
+  id            BIGINT IDENTITY(1,1) PRIMARY KEY,
+  maDonTreo     NVARCHAR(20) NOT NULL,
+  soGiayTo      NVARCHAR(20) NULL,
+  hoTen         NVARCHAR(100) NULL,
+  doiTuong      NVARCHAR(50) NULL,
+  thongTinCho   NVARCHAR(255) NULL,
+  giaVe         DECIMAL(18,2) DEFAULT 0,
+  giamGia       DECIMAL(18,2) DEFAULT 0,
+  thanhTien     DECIMAL(18,2) DEFAULT 0,
+  maChoNgoi     NVARCHAR(30) NULL,
+  maLichTrinh   NVARCHAR(20) NULL,
+  FOREIGN KEY (maDonTreo)   REFERENCES DonTreoDat(maDonTreo) ON DELETE CASCADE,
+  FOREIGN KEY (maChoNgoi)   REFERENCES ChoNgoi(maChoNgoi),
+  FOREIGN KEY (maLichTrinh) REFERENCES LichTrinh(maLichTrinh)
 );
 
 /* ============================================

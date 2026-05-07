@@ -22,6 +22,7 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
     private javax.swing.Timer updateTimer; // Timer để update thời gian còn lại
+    private boolean isSearching = false; // Flag đánh dấu đang trong chế độ tìm kiếm
     
     /**
      * Creates new form Dialog_TreoDon
@@ -75,6 +76,7 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
      * Load tất cả đơn treo vào table
      */
     private void loadTatCaDonTreo() {
+        isSearching = false; // Reset trạng thái tìm kiếm
         modelTable.setRowCount(0);
         List<DonTreoDat> danhSach = QuanLyDonTreo.layDanhSachDonTreo();
         
@@ -96,18 +98,37 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
      * Update thời gian còn lại cho tất cả các dòng
      */
     private void updateThoiGianConLai() {
-        List<DonTreoDat> danhSach = QuanLyDonTreo.layDanhSachDonTreo();
-        
-        // Nếu số dòng trong table khác số đơn trong danh sách → reload
-        if (modelTable.getRowCount() != danhSach.size()) {
-            loadTatCaDonTreo();
-            return;
+        // Nếu không tìm kiếm, kiểm tra xem có cần reload do thay đổi số lượng đơn không
+        if (!isSearching) {
+            List<DonTreoDat> danhSachHienTai = QuanLyDonTreo.layDanhSachDonTreo();
+            if (modelTable.getRowCount() != danhSachHienTai.size()) {
+                loadTatCaDonTreo();
+                return;
+            }
         }
         
-        // Update cột thời gian còn lại (cột index 7 sau khi thêm mã đơn)
-        for (int i = 0; i < danhSach.size() && i < modelTable.getRowCount(); i++) {
-            DonTreoDat don = danhSach.get(i);
-            modelTable.setValueAt(don.getThoiGianConLaiFormatted(), i, 7);
+        // Cập nhật thời gian cho từng dòng đang hiển thị dựa trên Mã đơn
+        List<Integer> rowsToRemove = new java.util.ArrayList<>();
+        
+        for (int i = 0; i < modelTable.getRowCount(); i++) {
+            Object objMaDon = modelTable.getValueAt(i, 0);
+            if (objMaDon == null) continue;
+            
+            String maDon = objMaDon.toString();
+            DonTreoDat don = QuanLyDonTreo.layDonTreo(maDon);
+            
+            if (don != null && don.conTrongThoiHan()) {
+                // Cập nhật thời gian còn lại (index 7)
+                modelTable.setValueAt(don.getThoiGianConLaiFormatted(), i, 7);
+            } else {
+                // Đơn đã hết hạn hoặc bị xóa → Đánh dấu để xóa khỏi bảng
+                rowsToRemove.add(i);
+            }
+        }
+        
+        // Xóa các dòng hết hạn (duyệt ngược từ dưới lên để không sai index)
+        for (int i = rowsToRemove.size() - 1; i >= 0; i--) {
+            modelTable.removeRow(rowsToRemove.get(i));
         }
     }
     
@@ -308,6 +329,8 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
             loadTatCaDonTreo();
             return;
         }
+        
+        isSearching = true; // Đánh dấu đang tìm kiếm
         
         modelTable.setRowCount(0);
         List<DonTreoDat> ketQua = new java.util.ArrayList<>();

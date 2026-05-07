@@ -1,122 +1,127 @@
-/*
- * Quản lý danh sách đơn treo (Static)
- */
 package gui;
 
 import entity.DonTreoDat;
+import service.IDonTreoService;
+import utils.ClientContext;
+import javax.swing.JOptionPane;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class static để quản lý danh sách đơn treo trong session
- * @author PC
+ * Class static để quản lý danh sách đơn treo thông qua RMI Service
  */
 public class QuanLyDonTreo {
     
-    private static List<DonTreoDat> danhSachDonTreo = new ArrayList<>();
-    private static int soThuTu = 1;
+    private static IDonTreoService getService() {
+        return ClientContext.getDonTreoService();
+    }
     
     /**
-     * Thêm đơn treo mới
+     * Thêm đơn treo mới (Lưu xuống Database qua RMI)
      */
     public static void themDonTreo(DonTreoDat donTreo) {
-        // Tự động tạo mã đơn treo
-        if (donTreo.getMaDonTreo() == null || donTreo.getMaDonTreo().isEmpty()) {
-            donTreo.setMaDonTreo("DT" + String.format("%03d", soThuTu++));
+        try {
+            // Tự động set ngày lập và giờ lập nếu chưa có
+            if (donTreo.getNgayLap() == null) {
+                donTreo.setNgayLap(java.time.LocalDateTime.now());
+            }
+            if (donTreo.getGioLap() == null) {
+                donTreo.setGioLap(java.time.LocalDateTime.now());
+            }
+            
+            getService().themDonTreo(donTreo);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Lỗi khi treo đơn: " + e.getMessage(), "Lỗi RMI", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
-        
-        // ⚡ Tự động set ngày lập và giờ lập nếu chưa có
-        if (donTreo.getNgayLap() == null) {
-            donTreo.setNgayLap(java.time.LocalDateTime.now());
-        }
-        if (donTreo.getGioLap() == null) {
-            donTreo.setGioLap(java.time.LocalDateTime.now());
-        }
-        
-        danhSachDonTreo.add(donTreo);
     }
     
     /**
-     * Lấy danh sách tất cả đơn treo
+     * Lấy danh sách tất cả đơn treo từ Database
      */
     public static List<DonTreoDat> layDanhSachDonTreo() {
-        // Tự động xóa các đơn hết hạn
-        xoaDonHetHan();
-        return new ArrayList<>(danhSachDonTreo);
+        try {
+            return getService().layDanhSachDonTreo();
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lấy danh sách đơn treo qua RMI: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
     
     /**
-     * Xóa tất cả đơn đã hết hạn (> 15 phút)
+     * Xóa tất cả đơn đã hết hạn (> 15 phút) trên Database
      */
     public static void xoaDonHetHan() {
-        List<DonTreoDat> donCanXoa = new ArrayList<>();
-        for (DonTreoDat don : danhSachDonTreo) {
-            if (!don.conTrongThoiHan()) {
-                donCanXoa.add(don);
-                // Xóa ghế giữ chỗ của đơn hết hạn
-                QuanLyGheGiuCho.xoaTatCaGheCuaDonTreo(don.getMaDonTreo());
-                System.out.println("DEBUG: Đơn treo hết hạn tự động bị xóa: " + don.getMaDonTreo());
-            }
+        try {
+            getService().xoaDonHetHan();
+        } catch (Exception e) {
+            System.err.println("Lỗi khi xóa đơn hết hạn qua RMI: " + e.getMessage());
         }
-        danhSachDonTreo.removeAll(donCanXoa);
     }
     
     /**
-     * Xóa đơn treo theo mã
+     * Xóa đơn treo theo mã trên Database
      */
     public static boolean xoaDonTreo(String maDonTreo) {
-        return danhSachDonTreo.removeIf(don -> don.getMaDonTreo().equals(maDonTreo));
+        try {
+            return getService().xoaDonTreo(maDonTreo);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi xóa đơn treo qua RMI: " + e.getMessage());
+            return false;
+        }
     }
     
     /**
-     * Lấy đơn treo theo mã
+     * Lấy đơn treo theo mã từ Database
      */
     public static DonTreoDat layDonTreo(String maDonTreo) {
-        return danhSachDonTreo.stream()
-            .filter(don -> don.getMaDonTreo().equals(maDonTreo))
-            .findFirst()
-            .orElse(null);
+        try {
+            return getService().layDonTreo(maDonTreo);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lấy đơn treo theo mã qua RMI: " + e.getMessage());
+            return null;
+        }
     }
     
     /**
-     * Lấy đơn treo theo CCCD
+     * Lấy đơn treo theo CCCD từ Database
      */
     public static List<DonTreoDat> layDonTreoTheoCCCD(String cccd) {
-        List<DonTreoDat> ketQua = new ArrayList<>();
-        for (DonTreoDat don : danhSachDonTreo) {
-            if (don.getCccdNguoiDat() != null && don.getCccdNguoiDat().contains(cccd)) {
-                ketQua.add(don);
-            }
+        try {
+            return getService().layDonTreoTheoCCCD(cccd);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tìm đơn treo theo CCCD qua RMI: " + e.getMessage());
+            return new ArrayList<>();
         }
-        return ketQua;
     }
     
     /**
-     * Lấy đơn treo theo SĐT
+     * Lấy đơn treo theo SĐT từ Database
      */
     public static List<DonTreoDat> layDonTreoTheoSDT(String sdt) {
-        List<DonTreoDat> ketQua = new ArrayList<>();
-        for (DonTreoDat don : danhSachDonTreo) {
-            if (don.getSdtNguoiDat() != null && don.getSdtNguoiDat().contains(sdt)) {
-                ketQua.add(don);
-            }
+        try {
+            return getService().layDonTreoTheoSDT(sdt);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tìm đơn treo theo SDT qua RMI: " + e.getMessage());
+            return new ArrayList<>();
         }
-        return ketQua;
     }
     
     /**
-     * Xóa tất cả đơn treo
+     * Xóa tất cả đơn treo (Không khuyến khích dùng rộng rãi)
      */
     public static void xoaTatCa() {
-        danhSachDonTreo.clear();
+        // Có thể thêm vào IDonTreoService nếu cần thiết
     }
     
     /**
-     * Đếm số lượng đơn treo
+     * Đếm số lượng đơn treo đang có trong Database
      */
     public static int demSoLuong() {
-        xoaDonHetHan();
-        return danhSachDonTreo.size();
+        try {
+            return layDanhSachDonTreo().size();
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }
-

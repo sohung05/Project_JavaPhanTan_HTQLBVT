@@ -1,6 +1,8 @@
 package gui;
 
 import entity.GheGiuCho;
+import service.IDonTreoService;
+import utils.ClientContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -12,7 +14,20 @@ import java.util.stream.Collectors;
  */
 public class QuanLyGheGiuCho {
     private static List<GheGiuCho> danhSachGheGiuCho = new ArrayList<>();
+    private static List<String> danhSachMaGheDangTreoRemote = new ArrayList<>(); // Danh sách từ database
     private static Timer timer = new Timer(true); // Daemon thread
+    
+    /**
+     * Làm mới danh sách ghế đang treo từ Database (RMI)
+     */
+    public static void refreshDanhSachGheTreo(String maLichTrinh) {
+        if (maLichTrinh == null) return;
+        try {
+            danhSachMaGheDangTreoRemote = ClientContext.getDonTreoService().layDanhSachMaGheDangTreo(maLichTrinh);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lấy danh sách ghế treo từ Server: " + e.getMessage());
+        }
+    }
     
     /**
      * Thêm ghế vào danh sách giữ chỗ (cũ - không có maLichTrinh, giữ để tương thích)
@@ -49,20 +64,28 @@ public class QuanLyGheGiuCho {
      * Kiểm tra ghế có đang được giữ chỗ không (mới - check cả maLichTrinh)
      */
     public static boolean kiemTraGheDangGiuCho(String maChoNgoi, String maLichTrinh) {
-        // Xóa các ghế đã hết hạn trước
+        // 1. Kiểm tra trong danh sách RAM cục bộ trước (ưu tiên vì nhanh)
         xoaGheHetHan();
         
+        boolean dangGiuChoLocal = false;
         if (maLichTrinh == null) {
-            // Nếu không truyền maLichTrinh, check chỉ maChoNgoi (tương thích ngược)
-            return danhSachGheGiuCho.stream()
+            dangGiuChoLocal = danhSachGheGiuCho.stream()
                 .anyMatch(ghe -> ghe.getMaChoNgoi().equals(maChoNgoi) && ghe.conTrongThoiGianGiuCho());
         } else {
-            // Nếu có maLichTrinh, check cả 2 (chính xác với khứ hồi)
-            return danhSachGheGiuCho.stream()
+            dangGiuChoLocal = danhSachGheGiuCho.stream()
                 .anyMatch(ghe -> ghe.getMaChoNgoi().equals(maChoNgoi) 
                     && (ghe.getMaLichTrinh() == null || ghe.getMaLichTrinh().equals(maLichTrinh))
                     && ghe.conTrongThoiGianGiuCho());
         }
+        
+        if (dangGiuChoLocal) return true;
+        
+        // 2. Nếu không có trong RAM, kiểm tra trong danh sách từ Database (nếu đã được load)
+        if (danhSachMaGheDangTreoRemote != null && danhSachMaGheDangTreoRemote.contains(maChoNgoi)) {
+            return true;
+        }
+        
+        return false;
     }
     
     /**

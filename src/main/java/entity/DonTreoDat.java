@@ -60,12 +60,13 @@ public class DonTreoDat implements Serializable {
         this.danhSachVe = new ArrayList<>();
     }
     
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "maDonTreo")
+    @OneToMany(mappedBy = "donTreoDat", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<ThongTinVeTam> danhSachVe;
 
     public void themVe(ThongTinVeTam ve) {
+        if (this.danhSachVe == null) this.danhSachVe = new ArrayList<>();
         this.danhSachVe.add(ve);
+        ve.setDonTreoDat(this);
     }
 
     public boolean conTrongThoiHan() {
@@ -98,6 +99,10 @@ public class DonTreoDat implements Serializable {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
+
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "maDonTreo", nullable = false)
+        private DonTreoDat donTreoDat; // Tham chiếu ngược lại đơn treo
 
         @Column(length = 20)
         private String soGiayTo;

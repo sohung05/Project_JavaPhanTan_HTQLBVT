@@ -5,6 +5,7 @@
 package gui;
 
 import dao.LoaiVe_DAO;
+import dao.KhachHang_DAO;
 import dao.KhuyenMaiDoiTuong_DAO;
 import dao.KhuyenMaiHoaDon_DAO;
 import entity.ChoNgoi;
@@ -31,7 +32,9 @@ public class Gui_NhapThongTinBanVe extends JPanel {
     private DefaultTableModel modelThongTinVe;
     private LoaiVe_DAO loaiVeDAO;
     private KhuyenMaiDoiTuong_DAO khuyenMaiDoiTuongDAO;
+    private KhachHang_DAO khachHangDAO;
     private KhuyenMaiHoaDon_DAO khuyenMaiHoaDonDAO;
+    private boolean isUpdatingTable = false; // Cờ chặn vòng lặp sự kiện
     private List<LoaiVe> danhSachLoaiVe;
     private Map<String, LoaiVe> mapLoaiVe; // Map tên loại vé -> LoaiVe
     private NumberFormat currencyFormat;
@@ -65,6 +68,7 @@ public class Gui_NhapThongTinBanVe extends JPanel {
         // Khởi tạo DAO và format
         loaiVeDAO = new LoaiVe_DAO();
         khuyenMaiDoiTuongDAO = new KhuyenMaiDoiTuong_DAO();
+        khachHangDAO = new KhachHang_DAO();
         khuyenMaiHoaDonDAO = new KhuyenMaiHoaDon_DAO();
         currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         
@@ -84,54 +88,98 @@ public class Gui_NhapThongTinBanVe extends JPanel {
         // Setup ComboBox cho cột "Đối Tượng" (cột index 2)
         setupComboBoxColumn();
         
-        // Thêm listener cho table để tính lại giá khi thay đổi đối tượng
+        // Thêm listener cho table để xử lý nhiều sự kiện (Đối tượng, CCCD)
         modelThongTinVe.addTableModelListener(e -> {
-            if (e.getColumn() == 2) { // Cột "Đối Tượng"
-                int row = e.getFirstRow();
+            if (isUpdatingTable) return;
+            
+            int row = e.getFirstRow();
+            int column = e.getColumn();
+            
+            if (column == 2) { // 🔹 Cột "Đối Tượng"
                 String doiTuong = (String) modelThongTinVe.getValueAt(row, 2);
-                
-                // Nếu chọn đối tượng "Trẻ em" → Hiện dialog nhập ngày sinh
                 if (doiTuong != null && doiTuong.equals("Trẻ em")) {
-                    SwingUtilities.invokeLater(() -> {
-                        hienDialogNhapNgaySinh(row, doiTuong);
-                    });
+                    SwingUtilities.invokeLater(() -> hienDialogNhapNgaySinh(row, doiTuong));
                 } else if (doiTuong != null && !doiTuong.isEmpty()) {
-                    // Các đối tượng khác → Tính giá bình thường
                     tinhLaiGiaVe(row);
                     capNhatTongTien();
                 }
-                // Nếu chọn "" (trống) → Không làm gì
+                
+                // Nếu là dòng đầu tiên, đồng bộ xuống thông tin người đặt (nếu cần)
+                if (row == 0) capNhatThongTinNguoiDatTuDong();
+                
+            } else if (column == 0) { // 🔹 Cột "Số giấy tờ / CCCD"
+                String cccd = (String) modelThongTinVe.getValueAt(row, 0);
+                if (cccd != null && (cccd.length() == 9 || cccd.length() == 12)) {
+                    xuLyTraCuuKhachHang(row, cccd);
+                }
+                
+                // Nếu là dòng đầu tiên, đồng bộ xuống thông tin người đặt
+                if (row == 0) capNhatThongTinNguoiDatTuDong();
+            } else if (column == 1) { // 🔹 Cột "Họ Tên"
+                if (row == 0) capNhatThongTinNguoiDatTuDong();
             }
         });
         
         // Thêm listener cho nút "Xóa"
         btnXoa.addActionListener(evt -> btnXoaActionPerformed(evt));
-        
-        // Thêm listener để tự động điền thông tin người đặt vé từ vé đầu tiên
-        setupAutoFillCustomerInfo();
     }
     
     /**
-     * Tự động điền thông tin người đặt vé từ vé đầu tiên
+     * Tra cứu khách hàng từ CCCD và tự động điền thông tin
      */
-    private void setupAutoFillCustomerInfo() {
-        modelThongTinVe.addTableModelListener(e -> {
-            // Lấy thông tin từ dòng đầu tiên (row 0)
-            if (modelThongTinVe.getRowCount() > 0) {
-                String soGiayTo = modelThongTinVe.getValueAt(0, 0) != null ? 
-                                  modelThongTinVe.getValueAt(0, 0).toString() : "";
-                String hoTen = modelThongTinVe.getValueAt(0, 1) != null ? 
-                               modelThongTinVe.getValueAt(0, 1).toString() : "";
-                
-                // Chỉ tự động điền nếu các trường đang trống
-                if (txtCCCD.getText().trim().isEmpty()) {
-                    txtCCCD.setText(soGiayTo);
-                }
-                if (txtHoTen.getText().trim().isEmpty()) {
-                    txtHoTen.setText(hoTen);
-                }
+    private void xuLyTraCuuKhachHang(int row, String cccd) {
+        new Thread(() -> {
+            entity.KhachHang kh = khachHangDAO.findByCCCD(cccd);
+            if (kh != null) {
+                SwingUtilities.invokeLater(() -> {
+                    isUpdatingTable = true;
+                    // Điền họ tên vào bảng
+                    modelThongTinVe.setValueAt(kh.getHoTen(), row, 1);
+                    
+                    // Điền đối tượng nếu chưa có
+                    if (modelThongTinVe.getValueAt(row, 2).toString().isEmpty()) {
+                        String dtDisplay = switch (kh.getDoiTuong()) {
+                            case "TreEm" -> "Trẻ em";
+                            case "NguoiLon" -> "Người lớn";
+                            case "NguoiCaoTuoi" -> "Người cao tuổi";
+                            case "SinhVien" -> "Sinh viên";
+                            default -> kh.getDoiTuong();
+                        };
+                        modelThongTinVe.setValueAt(dtDisplay, row, 2);
+                    }
+                    
+                    // Nếu là dòng đầu tiên, điền xuống thông tin người đặt vé
+                    if (row == 0) {
+                        txtCCCD.setText(kh.getCCCD());
+                        txtHoTen.setText(kh.getHoTen());
+                        txtSDT.setText(kh.getSDT());
+                        txtEmail.setText(kh.getEmail());
+                    }
+                    
+                    isUpdatingTable = false;
+                    tinhLaiGiaVe(row);
+                    capNhatTongTien();
+                });
             }
-        });
+        }).start();
+    }
+
+    /**
+     * Tự động điền thông tin người đặt vé từ vé đầu tiên (row 0)
+     */
+    private void capNhatThongTinNguoiDatTuDong() {
+        if (modelThongTinVe.getRowCount() > 0) {
+            String soGiayTo = modelThongTinVe.getValueAt(0, 0) != null ? modelThongTinVe.getValueAt(0, 0).toString() : "";
+            String hoTen = modelThongTinVe.getValueAt(0, 1) != null ? modelThongTinVe.getValueAt(0, 1).toString() : "";
+            
+            // Chỉ điền nếu CCCD hoặc Họ tên ở dưới đang trống để tránh ghi đè khi user tự nhập
+            if (txtCCCD.getText().trim().isEmpty() || txtCCCD.getText().equals(soGiayTo)) {
+                txtCCCD.setText(soGiayTo);
+            }
+            if (txtHoTen.getText().trim().isEmpty() || txtHoTen.getText().equals(hoTen)) {
+                txtHoTen.setText(hoTen);
+            }
+        }
     }
     
     /**

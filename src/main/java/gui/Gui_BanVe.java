@@ -631,6 +631,7 @@ public class Gui_BanVe extends JPanel {
             if (choCanXoa != null) {
                 // Xóa khỏi danh sách
                 danhSachGheDangChon.remove(choCanXoa);
+                mapGheLichTrinh.remove(choCanXoa); // ⚡ FIX: Xóa khỏi map lịch trình để đồng bộ
                 
                 // Xóa khỏi bảng
                 modelGioVe.removeRow(selectedRow);
@@ -740,6 +741,7 @@ public class Gui_BanVe extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             modelGioVe.setRowCount(0);
             danhSachGheDangChon.clear();
+            mapGheLichTrinh.clear(); // ⚡ FIX: Xóa sạch map lịch trình để đồng bộ
             
             // Refresh sơ đồ ghế
             if (toaDangChon != null && lichTrinhDangChon != null) {
@@ -1044,7 +1046,11 @@ public class Gui_BanVe extends JPanel {
         
         // ⚡ TỐI ƯU: Query 1 lần danh sách ghế đã đặt cho cả lịch trình
         Set<String> gheDaDatSet = veDAO.layDanhSachGheDaDat(lt.getMaLichTrinh());
-        System.out.println("📊 Lịch trình " + lt.getMaLichTrinh() + " có " + gheDaDatSet.size() + " ghế đã bán: " + gheDaDatSet);
+        
+        // ⚡ MỚI: Làm mới danh sách ghế đang treo từ Database để hiển thị màu vàng bền vững
+        QuanLyGheGiuCho.refreshDanhSachGheTreo(lt.getMaLichTrinh());
+        
+        System.out.println("📊 Lịch trình " + lt.getMaLichTrinh() + " có " + gheDaDatSet.size() + " ghế đã bán");
         
         // Kiểm tra toa ngồi hay nằm
         int soToa = toa.getSoToa();
