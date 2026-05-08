@@ -59,7 +59,7 @@ public class Server {
             IChoNgoiService choNgoiService = new ChoNgoiServiceImpl(em);
             IThongKeService thongKeService = new ThongKeServiceImpl(em);
             IKhuyenMaiService khuyenMaiService = new KhuyenMaiServiceImpl(em);
-            IDonTreoService donTreoService = new DonTreoServiceImpl(em);
+            IDonTreoService donTreoService = new DonTreoServiceImpl();
 
             // 3. Tạo RMI Registry tại cổng 1099
             LocateRegistry.createRegistry(1099);

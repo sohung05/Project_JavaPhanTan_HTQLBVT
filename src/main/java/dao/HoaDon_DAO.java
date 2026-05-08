@@ -19,6 +19,7 @@ public class HoaDon_DAO {
 
     public List<HoaDon> findAll() {
         try {
+            em.clear();
             // Sử dụng Native Query để lấy thông tin tổng hợp KM nếu JPQL không hỗ trợ STRING_AGG dễ dàng
             // Tuy nhiên JPA sẽ tự động map các quan hệ nếu được cấu hình đúng.
             // Để giữ nguyên logic STRING_AGG (nếu có bảng KhuyenMai):
@@ -84,6 +85,7 @@ public class HoaDon_DAO {
 
     public HoaDon findByMaHoaDon(String maHoaDon) {
         try {
+            em.clear();
             return em.find(HoaDon.class, maHoaDon);
         } catch (Exception e) {
             e.printStackTrace();
@@ -93,6 +95,7 @@ public class HoaDon_DAO {
 
     public List<HoaDon> searchHoaDon(String keyword) {
         try {
+            em.clear();
             // Tìm theo mã hóa đơn hoặc CCCD/SĐT khách hàng
             String jpql = "SELECT hd FROM HoaDon hd WHERE hd.maHoaDon LIKE :keyword " +
                           "OR hd.khachHang.CCCD LIKE :keyword OR hd.khachHang.SDT LIKE :keyword " +

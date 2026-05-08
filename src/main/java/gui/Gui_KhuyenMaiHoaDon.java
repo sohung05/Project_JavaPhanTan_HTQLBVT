@@ -306,8 +306,9 @@ public class Gui_KhuyenMaiHoaDon extends JPanel {
                         LocalDate startDate = LocalDate.parse(startStr, dateFormatter);
                         LocalDate endDate   = LocalDate.parse(endStr, dateFormatter);
 
-                        // Chỉ lọc nếu toàn bộ khoảng nằm trong khoảng chọn
-                        return !startDate.isBefore(fromDate) && !endDate.isAfter(toDate);
+                        // Lọc các khuyến mãi có giao nhau với khoảng thời gian chọn (Overlap)
+                        // Điều kiện: (Ngày bắt đầu KM <= Ngày kết thúc lọc) AND (Ngày kết thúc KM >= Ngày bắt đầu lọc)
+                        return !startDate.isAfter(toDate) && !endDate.isBefore(fromDate);
 
                     } catch (Exception ex) {
                         return false;
@@ -514,9 +515,12 @@ public class Gui_KhuyenMaiHoaDon extends JPanel {
         jTextField4.setText("");
         jDateChooser1.setDate(null);
         jDateChooser2.setDate(null);
+        
+        // Hủy bỏ bộ lọc trên bảng
+        jTable1.setRowSorter(null);
         jTable1.clearSelection();
 
-        loadTableData();  // ✅ Load lại data từ DB vào model (instance variable)
+        loadTableData();  // Load lại toàn bộ data từ DB
     }
 
     @SuppressWarnings("unchecked")

@@ -25,8 +25,9 @@ import java.util.Locale;
 public class Gui_TraVe extends javax.swing.JPanel {
 
     private HoaDon_DAO hoaDonDAO;
-    private Ve_DAO veDAO;
-    private ChiTietHoaDon_DAO chiTietHoaDonDAO;
+    private dao.Ve_DAO veDAO;
+    private dao.ChiTietHoaDon_DAO chiTietHoaDonDAO;
+    private dao.LichSuInVe_DAO lichSuInVeDAO;
     private DefaultTableModel modelHoaDon;
     private DefaultTableModel modelVe;
     private NumberFormat currencyFormat;
@@ -44,9 +45,10 @@ public class Gui_TraVe extends javax.swing.JPanel {
     }
     
     private void initDAO() {
-        hoaDonDAO = new HoaDon_DAO();
-        veDAO = new Ve_DAO();
-        chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
+        hoaDonDAO = new dao.HoaDon_DAO();
+        veDAO = new dao.Ve_DAO();
+        chiTietHoaDonDAO = new dao.ChiTietHoaDon_DAO();
+        lichSuInVeDAO = new dao.LichSuInVe_DAO();
     }
     
     private void initCustomComponents() {
@@ -78,6 +80,14 @@ public class Gui_TraVe extends javax.swing.JPanel {
                 }
             }
         });
+        
+        // ⚡ THÊM NHÃN LỊCH SỬ IN VÀO jPanel2
+        lblLichSuIn = new javax.swing.JLabel("Thông tin in vé: Chưa chọn vé");
+        lblLichSuIn.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        lblLichSuIn.setForeground(new java.awt.Color(255, 102, 0));
+        jPanel2.add(lblLichSuIn);
+        // Thiết kế GroupLayout của jPanel2 khá phức tạp để chèn bằng code, 
+        // nhưng chúng ta có thể set layout cho nó đơn giản hơn hoặc add vào cuối.
     }
     
     /**
@@ -156,6 +166,32 @@ public class Gui_TraVe extends javax.swing.JPanel {
             jTextField7.setText(cccd);
             jTextField8.setText(tenKhach);
             jTextField9.setText(giaVe);
+            
+            // ⚡ HIỂN THỊ LỊCH SỬ IN CHI TIẾT
+            int count = lichSuInVeDAO.countPrintTimes(maVe);
+            entity.LichSuInVe lastPrint = lichSuInVeDAO.findLastPrint(maVe);
+            
+            // Trạng thái mặc định cho nhãn và ô nhập liệu
+            jTextField6.setBackground(java.awt.Color.WHITE);
+            jLabel8.setText("Mã vé:");
+            jLabel8.setForeground(java.awt.Color.BLACK);
+            
+            if (count > 0) {
+                String time = lastPrint != null ? lastPrint.getThoiGianIn().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm")) : "N/A";
+                String nv = (lastPrint != null && lastPrint.getNhanVien() != null) ? lastPrint.getNhanVien().getMaNhanVien() : "N/A";
+                
+                if (lblLichSuIn != null) {
+                    lblLichSuIn.setText("Đã in " + count + " lần. Lần cuối: " + time + " bởi " + nv);
+                    lblLichSuIn.setForeground(new java.awt.Color(255, 102, 0)); // Màu cam cho nổi bật vừa phải
+                    lblLichSuIn.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+                }
+            } else {
+                if (lblLichSuIn != null) {
+                    lblLichSuIn.setText("Vé chưa in lần nào.");
+                    lblLichSuIn.setForeground(new java.awt.Color(0, 153, 51)); // Màu xanh
+                    lblLichSuIn.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+                }
+            }
             
             System.out.println("✅ Đã hiển thị thông tin vé: " + maVe);
         } catch (Exception e) {
@@ -274,8 +310,9 @@ public class Gui_TraVe extends javax.swing.JPanel {
         jTextField7.setText("");
         jTextField8.setText("");
         jTextField9.setText("");
+        if (lblLichSuIn != null) lblLichSuIn.setText("Thông tin in vé: Chưa chọn vé");
         
-        List<Ve> danhSachVe = veDAO.findByMaHoaDon(maHoaDon);
+        List<entity.Ve> danhSachVe = veDAO.findByMaHoaDon(maHoaDon);
         System.out.println("✅ Tìm thấy " + danhSachVe.size() + " vé (chưa trả)");
         
         for (Ve ve : danhSachVe) {
@@ -294,8 +331,9 @@ public class Gui_TraVe extends javax.swing.JPanel {
                     String.valueOf(ve.getChoNgoi().getToa().getSoToa()) : "",
                 ve.getChoNgoi() != null ? String.valueOf(ve.getChoNgoi().getViTri()) : "",
                 ve.getThoiGianLenTau() != null ? 
-                    ve.getThoiGianLenTau().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "",
-                currencyFormat.format(ve.getGiaVe())
+                    ve.getThoiGianLenTau().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "",
+                currencyFormat.format(ve.getGiaVe()),
+                lichSuInVeDAO.countPrintTimes(ve.getMaVe()) // ⚡ Cột mới: Số lần in
             });
         }
     }
@@ -508,7 +546,7 @@ public class Gui_TraVe extends javax.swing.JPanel {
 
             },
             new String [] {
-                "Mã vé ", "CCCD", "Tên khách hàng", "Đối tượng", "Ga đi ", "Ga đến ", "Mã tàu", "Số toa", "Vị trí chỗ ", "Giờ lên tàu", "Giá"
+                "Mã vé ", "CCCD", "Tên khách hàng", "Đối tượng", "Ga đi ", "Ga đến ", "Mã tàu", "Số toa", "Vị trí chỗ ", "Giờ lên tàu", "Giá", "Số lần in"
             }
         ));
         jScrollPane2.setViewportView(jTable2);
@@ -1118,9 +1156,42 @@ public class Gui_TraVe extends javax.swing.JPanel {
             return;
         }
         
-        // In vé (không hiển thị thông báo)
-        ThermalPrinter.printTicket(veCanIn);
-        System.out.println("✅ Đã gửi lệnh in vé: " + maVe);
+        // ⚡ KIỂM TRA SỐ LẦN IN ĐỂ CẢNH BÁO CHI TIẾT
+        int printCount = lichSuInVeDAO.countPrintTimes(maVe);
+        if (printCount > 0) {
+            entity.LichSuInVe lastPrint = lichSuInVeDAO.findLastPrint(maVe);
+            String lastTime = lastPrint != null ? lastPrint.getThoiGianIn().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "N/A";
+            
+            String msg = String.format(
+                "⚠️VÉ NÀY ĐÃ ĐƯỢC IN TRƯỚC ĐÓ!\n\n" +
+                "• Mã vé: %s\n" +
+                "• Số lần in: %d\n" +
+                "• Lần in gần nhất: %s\n\n" +
+                "Bạn có chắc chắn muốn tiếp tục in lại không?",
+                maVe, printCount, lastTime
+            );
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                msg,
+                "Xác nhận in lại vé",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+            
+            if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+        
+        // In vé
+        if (ThermalPrinter.printTicket(veCanIn)) {
+            // Đợi một chút để background thread lưu DB xong
+            try { Thread.sleep(500); } catch (Exception e) {}
+            // Refresh lại bảng vé để cập nhật số lần in mới
+            loadVeByHoaDon(maHoaDon);
+        } else {
+            JOptionPane.showMessageDialog(this, "Lỗi khi in vé!");
+        }
+        System.out.println("✅ Đã xử lý lệnh in vé: " + maVe);
     }//GEN-LAST:event_btnInVeActionPerformed
     
     private void btnInHoaDonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInHoaDonActionPerformed
@@ -1161,11 +1232,48 @@ public class Gui_TraVe extends javax.swing.JPanel {
         // Set danh sách chi tiết vào hóa đơn (để tính tổng tiền)
         hoaDon.setDanhSachChiTiet(chiTietList);
         
-        // In hóa đơn (in trực tiếp không cần hỏi)
+        // In hóa đơn (Kiểm tra lịch sử in để cảnh báo)
+        boolean hasBeenPrinted = false;
+        int maxPrints = 0;
+        for (ChiTietHoaDon ct : chiTietList) {
+            if (ct.getVe() != null) {
+                int count = lichSuInVeDAO.countPrintTimes(ct.getVe().getMaVe());
+                if (count > 0) {
+                    hasBeenPrinted = true;
+                    if (count > maxPrints) maxPrints = count;
+                }
+            }
+        }
+
+        if (hasBeenPrinted) {
+            String msg = String.format(
+                "⚠️ HÓA ĐƠN NÀY ĐÃ TỪNG ĐƯỢC IN!\n\n" +
+                "• Mã hóa đơn: %s\n" +
+                "• Số lần in tối đa: %d\n\n" +
+                "Bạn có chắc chắn muốn in lại hóa đơn này không?",
+                maHoaDon, maxPrints
+            );
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                msg,
+                "Xác nhận in lại hóa đơn",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+            
+            if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
         ThermalPrinter printer = new ThermalPrinter(hoaDon, chiTietList);
         boolean success = printer.printInvoice(); // In trực tiếp ra máy mặc định
         
-        if (!success) {
+        if (success) {
+            // Đợi một chút để background thread lưu DB xong
+            try { Thread.sleep(500); } catch (Exception e) {}
+            // Refresh lại bảng vé để cập nhật số lần in mới
+            loadVeByHoaDon(maHoaDon);
+        } else {
             JOptionPane.showMessageDialog(this,
                 "❌ Lỗi khi in hóa đơn!\n" +
                 "- Kiểm tra máy in K58 đã được cài đặt chưa?\n" +
@@ -1246,7 +1354,8 @@ public class Gui_TraVe extends javax.swing.JPanel {
                     ve.getChoNgoi() != null ? String.valueOf(ve.getChoNgoi().getViTri()) : "",
                     ve.getThoiGianLenTau() != null ? 
                         ve.getThoiGianLenTau().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "",
-                    currencyFormat.format(ve.getGiaVe())
+                    currencyFormat.format(ve.getGiaVe()),
+                    lichSuInVeDAO.countPrintTimes(ve.getMaVe()) // ⚡ Cập nhật cột số lần in
                 });
                 count++;
             }
@@ -1286,6 +1395,37 @@ public class Gui_TraVe extends javax.swing.JPanel {
                 JOptionPane.WARNING_MESSAGE);
             return;
         }
+
+        // ⚡ KIỂM TRA LỊCH SỬ IN ĐỂ CẢNH BÁO (GIỐNG NÚT IN HÓA ĐƠN)
+        boolean hasBeenPrinted = false;
+        int maxPrints = 0;
+        for (Ve v : danhSachVe) {
+            int count = lichSuInVeDAO.countPrintTimes(v.getMaVe());
+            if (count > 0) {
+                hasBeenPrinted = true;
+                if (count > maxPrints) maxPrints = count;
+            }
+        }
+
+        if (hasBeenPrinted) {
+            String msg = String.format(
+                "⚠️ CẢNH BÁO: TẬP VÉ NÀY ĐÃ TỪNG ĐƯỢC IN!\n\n" +
+                "• Số lượng vé: %d\n" +
+                "• Số lần in tối đa: %d\n\n" +
+                "Bạn có chắc chắn muốn in lại toàn bộ tập vé này không?",
+                danhSachVe.size(), maxPrints
+            );
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                msg,
+                "Xác nhận in lại tập vé",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+            
+            if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
         
         // In từng vé với delay 2 giây
         new Thread(() -> {
@@ -1293,7 +1433,8 @@ public class Gui_TraVe extends javax.swing.JPanel {
                 Ve ve = danhSachVe.get(i);
                 System.out.println("🖨️ In vé " + (i + 1) + "/" + danhSachVe.size() + ": " + ve.getMaVe());
                 
-                ThermalPrinter.printTicket(ve);
+                ThermalPrinter.printTicket(ve, false); // ⚡ In thủ công (in lại)
+
                 
                 // Delay 2 giây trước khi in vé tiếp theo (trừ vé cuối cùng)
                 if (i < danhSachVe.size() - 1) {
@@ -1345,6 +1486,7 @@ public class Gui_TraVe extends javax.swing.JPanel {
     private javax.swing.JTextField jTextField7;
     private javax.swing.JTextField jTextField8;
     private javax.swing.JTextField jTextField9;
+    private javax.swing.JLabel lblLichSuIn;
     // End of variables declaration//GEN-END:variables
     
     /**

@@ -467,6 +467,12 @@ public class Gui_TaiKhoan extends JPanel {
             return;
         }
 
+        // KIỂM TRA TÊN TÀI KHOẢN ĐÃ TỒN TẠI CHƯA (Tránh lỗi PK Violation)
+        if (taiKhoanDAO.kiemTraTonTaiTheoTenTK(tk.getTenTaiKhoan())) {
+            JOptionPane.showMessageDialog(this, "Tên tài khoản này đã tồn tại! Vui lòng chọn tên khác.");
+            return;
+        }
+
         boolean ok = taiKhoanDAO.them(tk);
         if (ok) {
             JOptionPane.showMessageDialog(this, "Thêm tài khoản thành công!");

@@ -15,4 +15,7 @@ public interface IDashboardService extends Remote {
     Map<String, Integer> getSoVeTheoTuyen(int ngay, int thang, int top) throws RemoteException;
     Map<String, Integer> getSoChoNgoiConTrongTheoTuyen(LocalDate ngay) throws RemoteException;
     Map<String, Integer> getSoChoNgoiConTrongTheoTuyen(int ngay, int thang) throws RemoteException;
+    java.util.List<Object[]> getTopChuyenTauGheTrong(LocalDate ngay, int top) throws RemoteException;
+    int getSoTauDangChay() throws RemoteException;
+    String getTenTauDangChay() throws RemoteException;
 }

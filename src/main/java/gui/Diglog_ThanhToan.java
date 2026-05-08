@@ -637,6 +637,17 @@ public class Diglog_ThanhToan extends JDialog {
                     veTam.setThanhTien(0);
                 }
                 
+                // ⚡ LƯU THÔNG TIN GA CHẶNG (quan trọng cho quản lý chặng)
+                if (previousGui != null && previousGui.getPreviousGuiBanVe() != null) {
+                    entity.ChoNgoi choNgoi = veTam.getChoNgoi();
+                    if (choNgoi != null) {
+                        veTam.setGaDi(previousGui.getPreviousGuiBanVe().getMapGheGaDi().get(choNgoi));
+                        veTam.setGaDen(previousGui.getPreviousGuiBanVe().getMapGheGaDen().get(choNgoi));
+                        System.out.println("🟡 Vé #" + i + ": Chặng " + (veTam.getGaDi() != null ? veTam.getGaDi().getMaGa() : "null") + 
+                                           " -> " + (veTam.getGaDen() != null ? veTam.getGaDen().getMaGa() : "null"));
+                    }
+                }
+
                 donTreo.themVe(veTam);
             }
         }
@@ -652,8 +663,10 @@ public class Diglog_ThanhToan extends JDialog {
                 if (veTam.getChoNgoi() != null) {
                     String maChoNgoi = veTam.getChoNgoi().getMaChoNgoi();
                     String maLichTrinh = veTam.getLichTrinh() != null ? veTam.getLichTrinh().getMaLichTrinh() : null;
-                    System.out.println("🟡 TREO GHẾ: " + maChoNgoi + " | Lịch trình: " + maLichTrinh);
-                    QuanLyGheGiuCho.themGheGiuCho(maChoNgoi, donTreo.getMaDonTreo(), maLichTrinh);
+                    String maGaDi = veTam.getGaDi() != null ? veTam.getGaDi().getMaGa() : null;
+                    String maGaDen = veTam.getGaDen() != null ? veTam.getGaDen().getMaGa() : null;
+                    System.out.println("🟡 TREO GHẾ: " + maChoNgoi + " | Lịch trình: " + maLichTrinh + " | Chặng: " + maGaDi + "-" + maGaDen);
+                    QuanLyGheGiuCho.themGheGiuCho(maChoNgoi, donTreo.getMaDonTreo(), maLichTrinh, maGaDi, maGaDen);
                 }
             }
             System.out.println("🟡 ============ KẾT THÚC TREO ĐƠN ============");
@@ -1134,6 +1147,10 @@ public class Diglog_ThanhToan extends JDialog {
                     ve.setTenKhachHang(tenKH);
                     ve.setSoCCCD(soCCCD);
                     
+                    // ⚡ Lấy ga chặng từ map
+                    ve.setGaDi(guiBanVe.getMapGheGaDi().get(choNgoi));
+                    ve.setGaDen(guiBanVe.getMapGheGaDen().get(choNgoi));
+                    
                     if (!veDAO.insert(ve)) {
                         System.out.println("Lỗi: Không thể lưu vé " + ve.getMaVe());
                         return false;
@@ -1178,13 +1195,17 @@ public class Diglog_ThanhToan extends JDialog {
                         return false;
                     }
                     
+                    // ⚡ Nạp lại LichTrinh từ DB để tránh lỗi "no session" (LazyInitializationException)
+                    dao.LichTrinh_DAO ltDAO = new dao.LichTrinh_DAO();
+                    lichTrinhCuaVe = ltDAO.findByMaLichTrinh(lichTrinhCuaVe.getMaLichTrinh());
+                    
                     // Tạo Vé
                     entity.Ve ve = new entity.Ve();
                     String maVe = "V" + System.currentTimeMillis() + "_" + i;
                     ve.setMaVe(maVe);
                     ve.setLoaiVe(loaiVe);
                     ve.setMaVach(null);
-                    ve.setThoiGianLenTau(java.time.LocalDateTime.now());
+                    ve.setThoiGianLenTau(lichTrinhCuaVe != null ? lichTrinhCuaVe.getGioKhoiHanh() : null);
                     ve.setGiaVe(veTam.getGiaVe());
                     ve.setKhachHang(kh);
                     ve.setChoNgoi(veTam.getChoNgoi()); // ⚡ Lấy từ ThongTinVeTam
@@ -1192,6 +1213,10 @@ public class Diglog_ThanhToan extends JDialog {
                     ve.setTrangThai(true);
                     ve.setTenKhachHang(veTam.getHoTen());
                     ve.setSoCCCD(veTam.getSoGiayTo());
+                    
+                    // ⚡ Lấy ga chặng từ đơn treo
+                    ve.setGaDi(veTam.getGaDi());
+                    ve.setGaDen(veTam.getGaDen());
                     
                     System.out.println("🎫 INSERT Vé: maVe=" + maVe + ", maChoNgoi=" + veTam.getChoNgoi().getMaChoNgoi() + ", maLichTrinh=" + lichTrinhCuaVe.getMaLichTrinh() + ", trangThai=true");
                     

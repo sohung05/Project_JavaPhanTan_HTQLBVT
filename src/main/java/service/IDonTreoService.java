@@ -13,5 +13,5 @@ public interface IDonTreoService extends Remote {
     List<DonTreoDat> layDonTreoTheoCCCD(String cccd) throws RemoteException;
     List<DonTreoDat> layDonTreoTheoSDT(String sdt) throws RemoteException;
     void xoaDonHetHan() throws RemoteException;
-    List<String> layDanhSachMaGheDangTreo(String maLichTrinh) throws RemoteException;
+    List<String> layDanhSachMaGheDangTreo(String maLichTrinh, String maGaDi, String maGaDen) throws RemoteException;
 }

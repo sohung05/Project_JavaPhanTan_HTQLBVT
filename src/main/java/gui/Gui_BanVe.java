@@ -36,12 +36,18 @@ public class Gui_BanVe extends JPanel {
     private Toa toaDangChon;
     private List<ChoNgoi> danhSachGheDangChon;
     private Map<ChoNgoi, LichTrinh> mapGheLichTrinh; // Lưu lịch trình của từng ghế đã chọn
+    private Map<ChoNgoi, Ga> mapGheGaDi;   // 🆕 Lưu ga đi thực tế của từng ghế
+    private Map<ChoNgoi, Ga> mapGheGaDen;  // 🆕 Lưu ga đến thực tế của từng ghế
     
     // Lưu ga gốc để swap khi chuyển chiều
     private String gaDiGoc;
     private String gaDenGoc;
     private Date ngayDiGoc;
     private Date ngayVeGoc;
+    
+    // 🆕 Lưu mã ga hiện tại (để quản lý chặng)
+    private String maGaDiHienTai;
+    private String maGaDenHienTai;
     
     // Models
     private DefaultTableModel modelGioVe;
@@ -110,6 +116,8 @@ public class Gui_BanVe extends JPanel {
         // Khởi tạo danh sách ghế đang chọn
         danhSachGheDangChon = new ArrayList<>();
         mapGheLichTrinh = new LinkedHashMap<>(); // Khởi tạo map lưu lịch trình của từng ghế
+        mapGheGaDi = new HashMap<>();
+        mapGheGaDen = new HashMap<>();
         
         // Group radio buttons
         groupChieu = new ButtonGroup();
@@ -678,6 +686,16 @@ public class Gui_BanVe extends JPanel {
         // Convert Date to LocalDate
         LocalDate localNgayDi = ngayDi.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         
+        // 🆕 Tìm mã ga từ tên ga để quản lý chặng
+        java.util.List<entity.Ga> listGaDi = gaDAO.findByTenGa(gaDi);
+        java.util.List<entity.Ga> listGaDen = gaDAO.findByTenGa(gaDen);
+        
+        entity.Ga objGaDi = listGaDi.isEmpty() ? null : listGaDi.get(0);
+        entity.Ga objGaDen = listGaDen.isEmpty() ? null : listGaDen.get(0);
+        
+        if (objGaDi != null) maGaDiHienTai = objGaDi.getMaGa();
+        if (objGaDen != null) maGaDenHienTai = objGaDen.getMaGa();
+        
         // Tìm lịch trình
         danhSachLichTrinh = lichTrinhDAO.timLichTrinh(gaDi, gaDen, localNgayDi);
         
@@ -1044,13 +1062,14 @@ public class Gui_BanVe extends JPanel {
             return;
         }
         
-        // ⚡ TỐI ƯU: Query 1 lần danh sách ghế đã đặt cho cả lịch trình
-        Set<String> gheDaDatSet = veDAO.layDanhSachGheDaDat(lt.getMaLichTrinh());
+        // ⚡ TỐI ƯU: Query danh sách ghế đã đặt THEO CHẶNG
+        Set<String> gheDaDatSet = veDAO.layDanhSachGheDaDat(lt.getMaLichTrinh(), maGaDiHienTai, maGaDenHienTai);
         
-        // ⚡ MỚI: Làm mới danh sách ghế đang treo từ Database để hiển thị màu vàng bền vững
-        QuanLyGheGiuCho.refreshDanhSachGheTreo(lt.getMaLichTrinh());
+        // ⚡ MỚI: Làm mới danh sách ghế đang treo THEO CHẶNG
+        QuanLyGheGiuCho.refreshDanhSachGheTreo(lt.getMaLichTrinh(), maGaDiHienTai, maGaDenHienTai);
         
-        System.out.println("📊 Lịch trình " + lt.getMaLichTrinh() + " có " + gheDaDatSet.size() + " ghế đã bán");
+        System.out.println("📊 Chặng " + maGaDiHienTai + "-" + maGaDenHienTai + " của LT " + lt.getMaLichTrinh() + " có " + gheDaDatSet.size() + " ghế đã bán");
+        System.out.println("🟡 Số ghế đang TREO từ Server: " + QuanLyGheGiuCho.getDanhSachMaGheDangTreoRemote().size());
         
         // Kiểm tra toa ngồi hay nằm
         int soToa = toa.getSoToa();
@@ -1479,8 +1498,10 @@ public class Gui_BanVe extends JPanel {
         System.out.println("➕ Thêm vào giỏ: Ghế " + cho.getMaChoNgoi() + " | Lịch trình " + lt.getMaLichTrinh() + 
             " | Giờ KH: " + (lt.getGioKhoiHanh() != null ? lt.getGioKhoiHanh() : "null"));
         
-        // Lưu lịch trình của ghế này vào map
+        // Lưu lịch trình và ga chặng của ghế này vào map
         mapGheLichTrinh.put(cho, lt);
+        mapGheGaDi.put(cho, gaDAO.findByMaGa(maGaDiHienTai));
+        mapGheGaDen.put(cho, gaDAO.findByMaGa(maGaDenHienTai));
         
         // Thêm vào bảng: Tuyến | Chỗ ngồi | Chiều (giữ nguyên 3 cột như giao diện cũ)
         modelGioVe.addRow(new Object[]{tuyen, choNgoi, chieu});
@@ -1543,11 +1564,26 @@ public class Gui_BanVe extends JPanel {
             return;
         }
         
-        // Swap ga đi/đến
-        txtGaDi.setText(gaDenGoc);
-        txtGaDen.setText(gaDiGoc);
+        // Cập nhật mã ga hiện tại khi đổi chiều
+        String tempGa = gaDiGoc;
+        gaDiGoc = gaDenGoc;
+        gaDenGoc = tempGa;
+        
+        // CẬP NHẬT UI (Quan trọng để btnTimKiem lấy đúng dữ liệu)
+        txtGaDi.setText(gaDiGoc);
+        txtGaDen.setText(gaDenGoc);
         dchNgayDi.setDate(ngayVeGoc);
-        dchNgayVe.setDate(null); // ⚡ Clear ngày về vì chiều về là vé một chiều
+        dchNgayVe.setDate(null);
+        
+        java.util.List<entity.Ga> listGaDi = gaDAO.findByTenGa(gaDiGoc);
+        java.util.List<entity.Ga> listGaDen = gaDAO.findByTenGa(gaDenGoc);
+        entity.Ga objGaDi = listGaDi.isEmpty() ? null : listGaDi.get(0);
+        entity.Ga objGaDen = listGaDen.isEmpty() ? null : listGaDen.get(0);
+        
+        if (objGaDi != null) maGaDiHienTai = objGaDi.getMaGa();
+        if (objGaDen != null) maGaDenHienTai = objGaDen.getMaGa();
+        
+        System.out.println("✅ ĐÃ SET UI CHIỀU VỀ: " + gaDiGoc + " -> " + gaDenGoc);
         
         System.out.println("✅ ĐÃ SET UI:");
         System.out.println("   - Ga đi: " + gaDenGoc);
@@ -1740,6 +1776,8 @@ public class Gui_BanVe extends JPanel {
         modelGioVe.setRowCount(0);
         danhSachGheDangChon.clear();
         mapGheLichTrinh.clear(); // Clear map lưu lịch trình
+        mapGheGaDi.clear();      // Clear map lưu ga đi
+        mapGheGaDen.clear();     // Clear map lưu ga đến
         
         // Reload sơ đồ ghế của toa đang hiển thị
         hienThiSoDoGheTrongPanel(toaDangChon, lichTrinhDangChon);
@@ -1842,5 +1880,13 @@ public class Gui_BanVe extends JPanel {
         if (toaDangChon != null && lichTrinhDangChon != null) {
             hienThiSoDoGheTrongPanel(toaDangChon, lichTrinhDangChon);
         }
+    }
+    
+    public Map<ChoNgoi, Ga> getMapGheGaDi() {
+        return mapGheGaDi;
+    }
+    
+    public Map<ChoNgoi, Ga> getMapGheGaDen() {
+        return mapGheGaDen;
     }
 }

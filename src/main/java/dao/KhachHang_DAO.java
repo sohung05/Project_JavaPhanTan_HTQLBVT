@@ -26,6 +26,33 @@ public class KhachHang_DAO {
         }
     }
 
+    public List<KhachHang> getAllKhachHangAndHanhKhach() {
+        try {
+            // Lấy danh sách khách hàng chính thức từ bảng KhachHang
+            List<KhachHang> dsKH = em.createQuery("SELECT kh FROM KhachHang kh", KhachHang.class).getResultList();
+            
+            // Tìm các hành khách trong bảng Ve mà chưa có trong bảng KhachHang (dựa trên CCCD)
+            // Lưu ý: Do HanhKhach trong Ve chỉ có Tên và CCCD nên các trường khác sẽ để trống/mặc định
+            List<Object[]> dsHanhKhachLa = em.createQuery(
+                "SELECT DISTINCT v.tenKhachHang, v.soCCCD FROM Ve v " +
+                "WHERE v.soCCCD NOT IN (SELECT kh.CCCD FROM KhachHang kh) " +
+                "AND v.soCCCD IS NOT NULL", Object[].class).getResultList();
+            
+            for (Object[] row : dsHanhKhachLa) {
+                String ten = (String) row[0];
+                String cccd = (String) row[1];
+                // Tạo một đối tượng KhachHang tạm thời để hiển thị
+                KhachHang khTam = new KhachHang("PASSENGER", cccd, ten, "", "", "Khách vãng lai");
+                dsKH.add(khTam);
+            }
+            
+            return dsKH;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
     public boolean them(KhachHang kh) {
         EntityTransaction tx = em.getTransaction();
         try {

@@ -4,6 +4,8 @@ import jakarta.persistence.EntityManager;
 import utils.EntityManagerFactoryUtil;
 
 import java.time.LocalDate;
+import java.sql.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +41,7 @@ public class Dashboard_DAO {
             double ptVeBan = getPhanTramVeBanSoVoiThangTruoc(thang, nam);
             data.put("ptVeBan", ptVeBan);
             data.put("doanhThu", phanTram);
+            data.put("tongDoanhThu", thangNay);
 
             // Tổng số vé trong tháng hiện tại
             Object soVeResult = em.createNativeQuery("""
@@ -101,7 +104,7 @@ public class Dashboard_DAO {
         Map<Integer, Double> data = new LinkedHashMap<>();
         String sql = """
             SELECT MONTH(hd.ngayTao) AS Thang,
-                   ISNULL(SUM(cthd.giaVe * cthd.soLuong), 0) AS DoanhThu
+                   ISNULL(SUM((cthd.giaVe - cthd.mucGiam) * cthd.soLuong), 0) AS DoanhThu
             FROM HoaDon hd
             JOIN ChiTietHoaDon cthd ON hd.maHoaDon = cthd.maHoaDon
             JOIN Ve v ON v.maVe = cthd.maVe
@@ -125,7 +128,7 @@ public class Dashboard_DAO {
 
     public double getDoanhThuMotThang(int thang, int nam) {
         String sql = """
-            SELECT ISNULL(SUM(cthd.giaVe * cthd.soLuong), 0) AS DoanhThu
+            SELECT ISNULL(SUM((cthd.giaVe - cthd.mucGiam) * cthd.soLuong), 0) AS DoanhThu
             FROM HoaDon hd
             JOIN ChiTietHoaDon cthd ON hd.maHoaDon = cthd.maHoaDon
             JOIN Ve v ON v.maVe = cthd.maVe
@@ -203,15 +206,15 @@ public class Dashboard_DAO {
     public Map<String, Double> getDoanhThuTheoTuyenTrongThang(int month, int year) {
         Map<String, Double> data = new LinkedHashMap<>();
         String sql = """
-            SELECT t.maTuyen, SUM(cthd.giaVe * cthd.soLuong) AS doanhThu
-            FROM Tuyen t
-            JOIN LichTrinh lt ON t.maTuyen = lt.maTuyen
-            JOIN Ve v ON lt.maLichTrinh = v.maLichTrinh
+            SELECT g1.tenGa + ' - ' + g2.tenGa AS tenChuyen, SUM((cthd.giaVe - cthd.mucGiam) * cthd.soLuong) AS doanhThu
+            FROM Ve v
             JOIN ChiTietHoaDon cthd ON v.maVe = cthd.maVe
             JOIN HoaDon hd ON cthd.maHoaDon = hd.maHoaDon
+            JOIN Ga g1 ON v.maGaDi = g1.maGa
+            JOIN Ga g2 ON v.maGaDen = g2.maGa
             WHERE hd.trangThai = 1 AND v.trangThai = 1
-              AND MONTH(hd.gioTao) = ? AND YEAR(hd.gioTao) = ?
-            GROUP BY t.maTuyen
+              AND MONTH(hd.ngayTao) = ? AND YEAR(hd.ngayTao) = ?
+            GROUP BY g1.tenGa, g2.tenGa
             ORDER BY doanhThu DESC
         """;
 
@@ -234,11 +237,13 @@ public class Dashboard_DAO {
         Map<String, Double> thongKe = new LinkedHashMap<>();
         String sql = """
             SELECT COUNT(DISTINCT hd.maKH) AS soKhachMoi,
-                   SUM(hd.tongTien) AS doanhThu,
-                   COUNT(cthd.maVe) AS soVeBan
+                   SUM((cthd.giaVe - cthd.mucGiam) * cthd.soLuong) AS doanhThu,
+                   COUNT(v.maVe) AS soVeBan
             FROM HoaDon hd
-            LEFT JOIN ChiTietHoaDon cthd ON hd.maHoaDon = cthd.maHoaDon
-            WHERE CAST(hd.ngayTao AS DATE) = ?
+            JOIN ChiTietHoaDon cthd ON hd.maHoaDon = cthd.maHoaDon
+            JOIN Ve v ON cthd.maVe = v.maVe
+            WHERE CAST(hd.ngayTao AS DATE) = ? 
+              AND hd.trangThai = 1 AND v.trangThai = 1
         """;
 
         try {
@@ -407,12 +412,13 @@ public class Dashboard_DAO {
         String sql = """
             SELECT TOP (?) g1.tenGa + ' - ' + g2.tenGa AS tuyen, COUNT(v.maVe) AS soVe
             FROM Ve v
-                JOIN LichTrinh lt ON v.maLichTrinh = lt.maLichTrinh
-                JOIN Ga g1 ON lt.maGaDi = g1.maGa
-                JOIN Ga g2 ON lt.maGaDen = g2.maGa
-            WHERE v.trangThai = 1
-              AND MONTH(lt.gioKhoiHanh) = ?
-              AND YEAR(lt.gioKhoiHanh) = ?
+                JOIN ChiTietHoaDon cthd ON v.maVe = cthd.maVe
+                JOIN HoaDon hd ON cthd.maHoaDon = hd.maHoaDon
+                JOIN Ga g1 ON v.maGaDi = g1.maGa
+                JOIN Ga g2 ON v.maGaDen = g2.maGa
+            WHERE v.trangThai = 1 AND hd.trangThai = 1
+              AND MONTH(hd.ngayTao) = ?
+              AND YEAR(hd.ngayTao) = ?
             GROUP BY g1.tenGa, g2.tenGa
             ORDER BY soVe DESC
         """;
@@ -432,5 +438,69 @@ public class Dashboard_DAO {
             System.err.println("❌ Lỗi SQL getSoVeTheoTuyen: " + e.getMessage());
         }
         return data;
+    }
+
+    public List<Object[]> getTopChuyenTauGheTrong(LocalDate ngay, int topN) {
+        List<Object[]> list = new ArrayList<>();
+        String sql = """
+            SELECT TOP (?) 
+                lt.soHieuTau,
+                g1.tenGa + ' - ' + g2.tenGa AS tuyen,
+                sub.tongGhe,
+                sub.gheDaBan,
+                (sub.tongGhe - sub.gheDaBan) AS gheTrong
+            FROM LichTrinh lt
+            JOIN (
+                SELECT lt2.maLichTrinh,
+                       COUNT(DISTINCT c.maChoNgoi) AS tongGhe,
+                       COUNT(DISTINCT v.maVe) AS gheDaBan
+                FROM LichTrinh lt2
+                JOIN ChuyenTau ct ON lt2.soHieuTau = ct.soHieuTau
+                JOIN Toa t ON ct.soHieuTau = t.soHieuTau
+                JOIN ChoNgoi c ON t.maToa = c.maToa
+                LEFT JOIN Ve v ON v.maChoNgoi = c.maChoNgoi AND v.maLichTrinh = lt2.maLichTrinh AND v.trangThai = 1
+                GROUP BY lt2.maLichTrinh
+            ) sub ON lt.maLichTrinh = sub.maLichTrinh
+            JOIN Ga g1 ON lt.maGaDi = g1.maGa
+            JOIN Ga g2 ON lt.maGaDen = g2.maGa
+            WHERE CAST(lt.gioKhoiHanh AS DATE) = ?
+            ORDER BY gheTrong DESC
+        """;
+
+        try {
+            @SuppressWarnings("unchecked")
+            List<Object[]> results = em.createNativeQuery(sql)
+                .setParameter(1, topN)
+                .setParameter(2, java.sql.Date.valueOf(ngay))
+                .getResultList();
+            list.addAll(results);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int getSoTauDangChay() {
+        String sql = "SELECT COUNT(*) FROM LichTrinh WHERE gioKhoiHanh <= GETDATE() AND gioDenDuKien >= GETDATE() AND trangThai = 1";
+        try {
+            Object result = em.createNativeQuery(sql).getSingleResult();
+            return result != null ? ((Number) result).intValue() : 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public String getTenTauDangChay() {
+        String sql = "SELECT soHieuTau FROM LichTrinh WHERE gioKhoiHanh <= GETDATE() AND gioDenDuKien >= GETDATE() AND trangThai = 1";
+        try {
+            @SuppressWarnings("unchecked")
+            List<String> results = em.createNativeQuery(sql).getResultList();
+            if (results == null || results.isEmpty()) return "Không có";
+            return String.join(", ", results);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Lỗi";
+        }
     }
 }

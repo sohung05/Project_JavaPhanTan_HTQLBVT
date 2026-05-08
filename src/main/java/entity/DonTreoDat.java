@@ -127,5 +127,13 @@ public class DonTreoDat implements Serializable {
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "maLichTrinh")
         private LichTrinh lichTrinh;
+
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "maGaDi")
+        private Ga gaDi;
+
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "maGaDen")
+        private Ga gaDen;
     }
 }

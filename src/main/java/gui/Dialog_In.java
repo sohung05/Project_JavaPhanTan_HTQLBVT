@@ -157,8 +157,9 @@ public class Dialog_In extends javax.swing.JDialog {
             // Set danh sách chi tiết vào hóa đơn
             hoaDon.setDanhSachChiTiet(chiTietList);
             
-            // In hóa đơn
+            // In hóa đơn (chế độ tự động)
             ThermalPrinter printer = new ThermalPrinter(hoaDon, chiTietList);
+            printer.setAutoPrint(true); // ⚡ Đánh dấu là in tự động sau bán
             boolean success = printer.printInvoice();
             
             if (!success) {
@@ -195,7 +196,7 @@ public class Dialog_In extends javax.swing.JDialog {
                 Ve ve = danhSachVe.get(i);
                 
                 System.out.println("🖨️ In vé " + (i + 1) + "/" + danhSachVe.size() + ": " + ve.getMaVe());
-                boolean success = ThermalPrinter.printTicket(ve);
+                boolean success = ThermalPrinter.printTicket(ve, true); // ⚡ Chế độ in tự động
                 
                 if (!success) {
                     System.err.println("❌ Lỗi khi in vé: " + ve.getMaVe());

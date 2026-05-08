@@ -573,8 +573,11 @@ public class Gui_KhuyenMaiDoiTuong extends JPanel {
         jTextField1.setText("");
         jTextField1.setEditable(false);
 
-        loadTableData();  // ✅ Load lại data từ DB vào model (instance variable)
+        // Hủy bỏ bộ lọc trên bảng
+        jTable1.setRowSorter(null);
+        jTable1.clearSelection();
 
+        loadTableData();  // Load lại toàn bộ data từ DB
     }
 
 

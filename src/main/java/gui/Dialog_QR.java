@@ -320,6 +320,9 @@ public class Dialog_QR extends JDialog {
 
             // ⚡ Lấy danh sách lịch trình (quan trọng cho khứ hồi)
             List<LichTrinh> danhSachLichTrinh = previousGui.getDanhSachLichTrinh();
+            List<entity.Ga> danhSachGaDi = previousGui.getDanhSachGaDi();
+            List<entity.Ga> danhSachGaDen = previousGui.getDanhSachGaDen();
+            
             System.out.println("🟡 DEBUG TREO ĐƠN: Số vé trong table = " + model.getRowCount());
             System.out.println("🟡 DEBUG TREO ĐƠN: Số ghế (ChoNgoi) = " + (danhSachChoNgoi != null ? danhSachChoNgoi.size() : "null"));
             System.out.println("🟡 DEBUG TREO ĐƠN: Số lịch trình = " + (danhSachLichTrinh != null ? danhSachLichTrinh.size() : "null"));
@@ -355,6 +358,14 @@ public class Dialog_QR extends JDialog {
                 } else {
                     System.out.println("❌ Vé #" + i + ": KHÔNG CÓ LichTrinh!");
                 }
+                
+                // ⚡ LƯU GA ĐI / GA ĐẾN CHO TỪNG VÉ (Quan trọng cho quản lý chặng)
+                if (danhSachGaDi != null && i < danhSachGaDi.size()) {
+                    veTam.setGaDi(danhSachGaDi.get(i));
+                }
+                if (danhSachGaDen != null && i < danhSachGaDen.size()) {
+                    veTam.setGaDen(danhSachGaDen.get(i));
+                }
 
                 try {
                     veTam.setGiaVe(giaVe != null ? Double.parseDouble(giaVe.toString()) : 0);
@@ -381,8 +392,11 @@ public class Dialog_QR extends JDialog {
                 if (veTam.getChoNgoi() != null) {
                     String maChoNgoi = veTam.getChoNgoi().getMaChoNgoi();
                     String maLichTrinh = veTam.getLichTrinh() != null ? veTam.getLichTrinh().getMaLichTrinh() : null;
-                    System.out.println("🟡 TREO GHẾ: " + maChoNgoi + " | Lịch trình: " + maLichTrinh);
-                    QuanLyGheGiuCho.themGheGiuCho(maChoNgoi, donTreo.getMaDonTreo(), maLichTrinh);
+                    String maGaDi = veTam.getGaDi() != null ? veTam.getGaDi().getMaGa() : null;
+                    String maGaDen = veTam.getGaDen() != null ? veTam.getGaDen().getMaGa() : null;
+                    
+                    System.out.println("🟡 TREO GHẾ: " + maChoNgoi + " | Lịch trình: " + maLichTrinh + " | Chặng: " + maGaDi + "-" + maGaDen);
+                    QuanLyGheGiuCho.themGheGiuCho(maChoNgoi, donTreo.getMaDonTreo(), maLichTrinh, maGaDi, maGaDen);
                 }
             }
             System.out.println("🟡 ============ KẾT THÚC TREO ĐƠN ============");
@@ -748,13 +762,17 @@ public class Dialog_QR extends JDialog {
                         return false;
                     }
                     
+                    // ⚡ Nạp lại LichTrinh từ DB để tránh lỗi "no session"
+                    LichTrinh_DAO ltDAO = new LichTrinh_DAO();
+                    lichTrinhCuaVe = ltDAO.findByMaLichTrinh(lichTrinhCuaVe.getMaLichTrinh());
+                    
                     // Tạo Vé
                     Ve ve = new Ve();
                     String maVe = "V" + System.currentTimeMillis() + "_" + i;
                     ve.setMaVe(maVe);
                     ve.setLoaiVe(loaiVe);
                     ve.setMaVach(null);
-                    ve.setThoiGianLenTau(LocalDateTime.now());
+                    ve.setThoiGianLenTau(lichTrinhCuaVe != null ? lichTrinhCuaVe.getGioKhoiHanh() : null);
                     ve.setGiaVe(veTam.getGiaVe());
                     ve.setKhachHang(kh);
                     ve.setChoNgoi(veTam.getChoNgoi());
@@ -762,6 +780,10 @@ public class Dialog_QR extends JDialog {
                     ve.setTrangThai(true);
                     ve.setTenKhachHang(veTam.getHoTen());
                     ve.setSoCCCD(veTam.getSoGiayTo());
+                    
+                    // ⚡ Bổ sung Ga đi / Ga đến
+                    ve.setGaDi(veTam.getGaDi());
+                    ve.setGaDen(veTam.getGaDen());
                     
                     if (!veDAO.insert(ve)) {
                         System.out.println("Lỗi: Không thể lưu vé từ đơn treo");

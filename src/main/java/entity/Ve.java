@@ -54,4 +54,12 @@ public class Ve implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maChoNgoi")
     private ChoNgoi choNgoi;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "maGaDi")
+    private Ga gaDi;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "maGaDen")
+    private Ga gaDen;
 }

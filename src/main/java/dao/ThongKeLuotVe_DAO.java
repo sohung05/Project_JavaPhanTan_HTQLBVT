@@ -77,12 +77,14 @@ public class ThongKeLuotVe_DAO {
     public List<Object[]> getTuyenNhieuNhatTrongThang(int thang, int nam) {
         List<Object[]> list = new ArrayList<>();
         String sql = """
-            SELECT v.maLichTrinh, COUNT(ct.maVe) AS soLuot
+            SELECT g1.tenGa + ' - ' + g2.tenGa AS tenChuyen, COUNT(ct.maVe) AS soLuot
             FROM ChiTietHoaDon ct
             JOIN HoaDon hd ON ct.maHoaDon = hd.maHoaDon
             JOIN Ve v ON ct.maVe = v.maVe
+            JOIN Ga g1 ON v.maGaDi = g1.maGa
+            JOIN Ga g2 ON v.maGaDen = g2.maGa
             WHERE MONTH(hd.ngayTao) = ? AND YEAR(hd.ngayTao) = ? AND hd.trangThai = 1
-            GROUP BY v.maLichTrinh
+            GROUP BY g1.tenGa, g2.tenGa
             ORDER BY soLuot DESC
         """;
 

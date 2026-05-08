@@ -36,6 +36,24 @@ public class Gui_NhanVien extends JPanel {
         modelNhanVien = (DefaultTableModel) tblNhanVien.getModel();
         loadData();
         addTableSelectionListener();
+        addRealTimeMaNVListener();
+    }
+
+    private void addRealTimeMaNVListener() {
+        // Lắng nghe sự thay đổi ngày sinh để tự sinh mã NV
+        dcNgaySinh.addPropertyChangeListener("date", evt -> {
+            // Chỉ tự sinh mã khi đang thêm mới (maNVChon == null) và đã chọn ngày sinh
+            if (maNVChon == null && dcNgaySinh.getDate() != null) {
+                Date d = dcNgaySinh.getDate();
+                LocalDate ngaySinh = Instant.ofEpochMilli(d.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+                
+                // Mặc định ngày vào làm là hôm nay cho nhân viên mới
+                LocalDate ngayVaoLam = LocalDate.now();
+                
+                String maDuKien = nhanVienDAO.generateMaNhanVien(ngayVaoLam, ngaySinh);
+                txtMaNV.setText(maDuKien);
+            }
+        });
     }
 
     private void addTableSelectionListener() {
@@ -592,8 +610,25 @@ public class Gui_NhanVien extends JPanel {
     }
 
     private void btnThemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnThemActionPerformed
+        // 1. Kiểm tra nếu đang chọn một nhân viên từ bảng (tránh thêm trùng khi đang xem chi tiết)
+        if (maNVChon != null && !maNVChon.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Nhân viên này đã tồn tại trong hệ thống!\nNếu bạn muốn thay đổi thông tin, hãy nhấn nút 'Cập nhật'.",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         NhanVien nv = getNhanVienFromForm();
         if (nv != null) {
+            // 2. Kiểm tra trùng CCCD trong cơ sở dữ liệu
+            if (nhanVienDAO.existsByCCCD(nv.getCCCD())) {
+                JOptionPane.showMessageDialog(this,
+                        "❌ Lỗi: Số CCCD này đã tồn tại trong hệ thống!",
+                        "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                txtCCCD.requestFocus();
+                return;
+            }
+
             if (nv.getNgayVaoLam() == null) {
                 nv.setNgayVaoLam(LocalDate.now());
             }
@@ -609,7 +644,7 @@ public class Gui_NhanVien extends JPanel {
                 clearForm();
             } else {
                 JOptionPane.showMessageDialog(this,
-                        "❌ Thêm thất bại! Có thể CCCD hoặc email đã tồn tại.");
+                        "❌ Thêm thất bại! Kiểm tra lại kết nối hoặc dữ liệu.");
             }
         }
     }

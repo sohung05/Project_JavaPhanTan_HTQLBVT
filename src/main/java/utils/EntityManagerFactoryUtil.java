@@ -5,12 +5,21 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
 public class EntityManagerFactoryUtil {
-    private EntityManagerFactory emf;
+    private static EntityManagerFactory emf;
     private EntityManager em;
 
     public EntityManagerFactoryUtil() {
-        emf = Persistence.createEntityManagerFactory("mssql-pu");
+        if (emf == null) {
+            emf = Persistence.createEntityManagerFactory("mssql-pu");
+        }
         em = emf.createEntityManager();
+    }
+
+    public static EntityManagerFactory getEntityManagerFactory() {
+        if (emf == null) {
+            emf = Persistence.createEntityManagerFactory("mssql-pu");
+        }
+        return emf;
     }
 
     public EntityManager getEntityManager() {
@@ -18,7 +27,8 @@ public class EntityManagerFactoryUtil {
     }
 
     public void close() {
-        em.close();
-        emf.close();
+        if (em != null && em.isOpen()) {
+            em.close();
+        }
     }
 }

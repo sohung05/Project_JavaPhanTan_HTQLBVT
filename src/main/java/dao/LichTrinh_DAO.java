@@ -20,16 +20,21 @@ public class LichTrinh_DAO {
 
     public List<LichTrinh> timLichTrinh(String tenGaDi, String tenGaDen, LocalDate ngayDi) {
         try {
-            // Query trực tiếp từ LichTrinh + Ga (không cần bảng BangGioGa)
-            String sql = "SELECT lt.* " +
-                         "FROM LichTrinh lt " +
-                         "JOIN Ga gaDi ON gaDi.maGa = lt.maGaDi " +
-                         "JOIN Ga gaDen ON gaDen.maGa = lt.maGaDen " +
-                         "WHERE gaDi.tenGa LIKE ? " +
-                         "  AND gaDen.tenGa LIKE ? " +
-                         "  AND CAST(lt.gioKhoiHanh AS DATE) = ? " +
-                         "  AND lt.trangThai = 1 " +
-                         "ORDER BY lt.gioKhoiHanh";
+            // ⚡ Nâng cấp: Tìm lịch trình dựa trên lộ trình đi qua các ga trung gian
+            String sql = """
+                SELECT lt.* 
+                FROM LichTrinh lt
+                JOIN BangGioGa bg1 ON lt.maTuyen = bg1.maTuyen
+                JOIN Ga g1 ON bg1.maGa = g1.maGa
+                JOIN BangGioGa bg2 ON lt.maTuyen = bg2.maTuyen
+                JOIN Ga g2 ON bg2.maGa = g2.maGa
+                WHERE g1.tenGa LIKE ? 
+                  AND g2.tenGa LIKE ?
+                  AND bg1.stt < bg2.stt
+                  AND CAST(lt.gioKhoiHanh AS DATE) = ?
+                  AND lt.trangThai = 1
+                ORDER BY lt.gioKhoiHanh
+            """;
 
             Query query = em.createNativeQuery(sql, LichTrinh.class);
             query.setParameter(1, "%" + tenGaDi + "%");

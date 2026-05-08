@@ -12,4 +12,5 @@ public interface IKhachHangService extends Remote {
     boolean exists(String maKH) throws RemoteException;
     KhachHang findByCCCD(String cccd) throws RemoteException;
     List<KhachHang> timKiem(String cccd, String hoTen, String email, String sdt, String doiTuong) throws RemoteException;
+    List<KhachHang> getAllKhachHangAndHanhKhach() throws RemoteException;
 }

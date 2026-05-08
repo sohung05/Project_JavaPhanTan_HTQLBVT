@@ -118,11 +118,12 @@ public class ThongKeDoanhThu_DAO {
             ), 0) AS doanhThu
             FROM HoaDon hd
             JOIN ChiTietHoaDon ct ON hd.maHoaDon = ct.maHoaDon
+            JOIN Ve v ON ct.maVe = v.maVe
             WHERE MONTH(hd.ngayTao) = ?
               AND YEAR(hd.ngayTao) = ?
               AND hd.trangThai = 1
+              AND v.trangThai = 1
               AND ct.soLuong > 0
-              AND ct.giaVe >= ct.mucGiam
         """;
 
         try {
@@ -142,7 +143,8 @@ public class ThongKeDoanhThu_DAO {
             SELECT SUM(ct.soLuong) AS tongVe
             FROM HoaDon hd
             JOIN ChiTietHoaDon ct ON hd.maHoaDon = ct.maHoaDon
-            WHERE MONTH(hd.ngayTao) = ? AND YEAR(hd.ngayTao) = ? AND hd.trangThai = 1
+            JOIN Ve v ON ct.maVe = v.maVe
+            WHERE MONTH(hd.ngayTao) = ? AND YEAR(hd.ngayTao) = ? AND hd.trangThai = 1 AND v.trangThai = 1
         """;
 
         try {

@@ -19,6 +19,7 @@ public class TaiKhoan_DAO {
 
     public List<Object[]> getAll() {
         try {
+            em.clear(); // Xóa cache để đảm bảo lấy dữ liệu mới nhất (có đầy đủ tên NV)
             List<TaiKhoan> ds = em.createQuery("SELECT tk FROM TaiKhoan tk JOIN FETCH tk.nhanVien", TaiKhoan.class).getResultList();
             List<Object[]> list = new ArrayList<>();
             for (TaiKhoan tk : ds) {
@@ -97,6 +98,17 @@ public class TaiKhoan_DAO {
         try {
             Long count = em.createQuery("SELECT COUNT(tk) FROM TaiKhoan tk WHERE tk.nhanVien.maNhanVien = :maNV", Long.class)
                     .setParameter("maNV", maNV)
+                    .getSingleResult();
+            return count > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean kiemTraTonTaiTheoTenTK(String tenTK) {
+        try {
+            Long count = em.createQuery("SELECT COUNT(tk) FROM TaiKhoan tk WHERE tk.tenTaiKhoan = :ten", Long.class)
+                    .setParameter("ten", tenTK)
                     .getSingleResult();
             return count > 0;
         } catch (Exception e) {

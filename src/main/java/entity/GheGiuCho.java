@@ -29,13 +29,21 @@ public class GheGiuCho implements Serializable {
 
     private LocalDateTime thoiGianGiuCho;
 
+    @Column(length = 20)
+    private String maGaDi;
+
+    @Column(length = 20)
+    private String maGaDen;
+
     @Transient
     private static final int PHUT_GIU_CHO = 15;
 
-    public GheGiuCho(String maChoNgoi, String maDonTreo, String maLichTrinh) {
+    public GheGiuCho(String maChoNgoi, String maDonTreo, String maLichTrinh, String maGaDi, String maGaDen) {
         this.maChoNgoi = maChoNgoi;
         this.maDonTreo = maDonTreo;
         this.maLichTrinh = maLichTrinh;
+        this.maGaDi = maGaDi;
+        this.maGaDen = maGaDen;
         this.thoiGianGiuCho = LocalDateTime.now();
     }
 

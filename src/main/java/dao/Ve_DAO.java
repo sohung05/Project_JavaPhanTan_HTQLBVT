@@ -20,6 +20,7 @@ public class Ve_DAO {
 
     public List<Ve> findAll() {
         try {
+            em.clear();
             return em.createQuery("SELECT v FROM Ve v ORDER BY v.thoiGianLenTau DESC", Ve.class).getResultList();
         } catch (Exception e) {
             e.printStackTrace();
@@ -29,6 +30,7 @@ public class Ve_DAO {
 
     public Ve findByMaVe(String maVe) {
         try {
+            em.clear();
             return em.find(Ve.class, maVe);
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,23 +83,66 @@ public class Ve_DAO {
         }
     }
 
-    public boolean kiemTraGheDaDat(String maChoNgoi, String maLichTrinh) {
+    /**
+     * Kiểm tra ghế đã đặt dựa trên chặng đường (Segments)
+     */
+    public boolean kiemTraGheDaDat(String maChoNgoi, String maLichTrinh, String maGaDi, String maGaDen) {
         try {
-            Long count = em.createQuery("SELECT COUNT(v) FROM Ve v WHERE v.choNgoi.maChoNgoi = :maChoNgoi AND v.lichTrinh.maLichTrinh = :maLichTrinh AND v.trangThai = true", Long.class)
-                    .setParameter("maChoNgoi", maChoNgoi)
-                    .setParameter("maLichTrinh", maLichTrinh)
+            String sql = """
+                SELECT COUNT(*) 
+                FROM Ve v
+                JOIN LichTrinh lt ON v.maLichTrinh = lt.maLichTrinh
+                JOIN BangGioGa bg_da_ban_di ON v.maGaDi = bg_da_ban_di.maGa AND lt.maTuyen = bg_da_ban_di.maTuyen
+                JOIN BangGioGa bg_da_ban_den ON v.maGaDen = bg_da_ban_den.maGa AND lt.maTuyen = bg_da_ban_den.maTuyen
+                JOIN BangGioGa bg_dang_chon_di ON ? = bg_dang_chon_di.maGa AND lt.maTuyen = bg_dang_chon_di.maTuyen
+                JOIN BangGioGa bg_dang_chon_den ON ? = bg_dang_chon_den.maGa AND lt.maTuyen = bg_dang_chon_den.maTuyen
+                WHERE v.maChoNgoi = ? 
+                  AND v.maLichTrinh = ? 
+                  AND v.trangThai = 1
+                  AND bg_da_ban_di.stt < bg_dang_chon_den.stt
+                  AND bg_da_ban_den.stt > bg_dang_chon_di.stt
+            """;
+            
+            Number count = (Number) em.createNativeQuery(sql)
+                    .setParameter(1, maGaDi)
+                    .setParameter(2, maGaDen)
+                    .setParameter(3, maChoNgoi)
+                    .setParameter(4, maLichTrinh)
                     .getSingleResult();
-            return count > 0;
+            
+            return count.intValue() > 0;
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
 
-    public Set<String> layDanhSachGheDaDat(String maLichTrinh) {
+    /**
+     * Lấy danh sách ghế đã đặt cho một chặng cụ thể
+     */
+    public Set<String> layDanhSachGheDaDat(String maLichTrinh, String maGaDi, String maGaDen) {
         try {
-            List<String> results = em.createQuery("SELECT v.choNgoi.maChoNgoi FROM Ve v WHERE v.lichTrinh.maLichTrinh = :maLichTrinh AND v.trangThai = true", String.class)
-                    .setParameter("maLichTrinh", maLichTrinh)
+            String sql = """
+                SELECT v.maChoNgoi
+                FROM Ve v
+                JOIN LichTrinh lt ON v.maLichTrinh = lt.maLichTrinh
+                JOIN BangGioGa bg_da_ban_di ON v.maGaDi = bg_da_ban_di.maGa AND lt.maTuyen = bg_da_ban_di.maTuyen
+                JOIN BangGioGa bg_da_ban_den ON v.maGaDen = bg_da_ban_den.maGa AND lt.maTuyen = bg_da_ban_den.maTuyen
+                JOIN BangGioGa bg_dang_chon_di ON ? = bg_dang_chon_di.maGa AND lt.maTuyen = bg_dang_chon_di.maTuyen
+                JOIN BangGioGa bg_dang_chon_den ON ? = bg_dang_chon_den.maGa AND lt.maTuyen = bg_dang_chon_den.maTuyen
+                WHERE v.maLichTrinh = ? 
+                  AND v.trangThai = 1
+                  AND bg_da_ban_di.stt < bg_dang_chon_den.stt
+                  AND bg_da_ban_den.stt > bg_dang_chon_di.stt
+            """;
+            
+            @SuppressWarnings("unchecked")
+            List<String> results = em.createNativeQuery(sql)
+                    .setParameter(1, maGaDi)
+                    .setParameter(2, maGaDen)
+                    .setParameter(3, maLichTrinh)
                     .getResultList();
+            
             return new HashSet<>(results);
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,6 +152,7 @@ public class Ve_DAO {
 
     public List<Ve> searchVe(String keyword) {
         try {
+            em.clear();
             String jpql = "SELECT v FROM Ve v WHERE (v.maVe LIKE :keyword OR v.soCCCD LIKE :keyword) AND v.trangThai = true ORDER BY v.thoiGianLenTau DESC";
             return em.createQuery(jpql, Ve.class)
                     .setParameter("keyword", "%" + keyword + "%")
@@ -119,6 +165,7 @@ public class Ve_DAO {
 
     public List<Ve> findByMaHoaDon(String maHoaDon) {
         try {
+            em.clear();
             // Giả sử có bảng ChiTietHoaDon hoặc mối quan hệ trong HoaDon
             // Nếu dùng Native Query cho chắc chắn logic cũ:
             String sql = "SELECT v.* FROM Ve v JOIN ChiTietHoaDon cthd ON v.maVe = cthd.maVe WHERE cthd.maHoaDon = ? AND v.trangThai = 1";

@@ -42,6 +42,8 @@ public class Gui_NhapThongTinBanVe extends JPanel {
     // Lưu Map vé để dùng khi thanh toán (cả chiều đi + chiều về)
     private List<ChoNgoi> danhSachChoNgoi; // Danh sách ghế theo thứ tự trong table
     private List<LichTrinh> danhSachLichTrinh; // Danh sách lịch trình tương ứng
+    private List<entity.Ga> danhSachGaDi;
+    private List<entity.Ga> danhSachGaDen;
     
     /**
      * Creates new form Gui_NhapThongTinBanVe
@@ -280,6 +282,11 @@ public class Gui_NhapThongTinBanVe extends JPanel {
         // Khởi tạo danh sách lưu trữ
         danhSachChoNgoi = new java.util.ArrayList<>();
         danhSachLichTrinh = new java.util.ArrayList<>();
+        danhSachGaDi = new java.util.ArrayList<>();
+        danhSachGaDen = new java.util.ArrayList<>();
+        
+        Map<ChoNgoi, entity.Ga> mapGheGaDi = previousGuiBanVe.getMapGheGaDi();
+        Map<ChoNgoi, entity.Ga> mapGheGaDen = previousGuiBanVe.getMapGheGaDen();
         
         // Clear table trước
         modelThongTinVe.setRowCount(0);
@@ -292,6 +299,8 @@ public class Gui_NhapThongTinBanVe extends JPanel {
             // Lưu vào danh sách (theo thứ tự)
             danhSachChoNgoi.add(cho);
             danhSachLichTrinh.add(lichTrinh);
+            danhSachGaDi.add(mapGheGaDi.get(cho));
+            danhSachGaDen.add(mapGheGaDen.get(cho));
             // Format thông tin chỗ chi tiết
             String soHieuTau = lichTrinh.getChuyenTau() != null ? lichTrinh.getChuyenTau().getSoHieuTau() : "N/A";
             String gaDi = lichTrinh.getGaDi() != null ? lichTrinh.getGaDi().getTenGa() : "";
@@ -1001,5 +1010,13 @@ public class Gui_NhapThongTinBanVe extends JPanel {
      */
     public List<LichTrinh> getDanhSachLichTrinh() {
         return danhSachLichTrinh;
+    }
+
+    public List<entity.Ga> getDanhSachGaDi() {
+        return danhSachGaDi;
+    }
+
+    public List<entity.Ga> getDanhSachGaDen() {
+        return danhSachGaDen;
     }
 }

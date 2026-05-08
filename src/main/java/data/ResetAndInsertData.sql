@@ -1,7 +1,6 @@
 -- ========================================
--- HỆ THỐNG QUẢN LÝ VÉ TÀU - RESET & INSERT DỮ LIỆU
--- File: 02_ResetAndInsertData.sql
--- Mô tả: Xóa toàn bộ dữ liệu cũ và thêm dữ liệu mới (ĐÚNG FORMAT THEO TÀI LIỆU)
+-- HỆ THỐNG QUẢN LÝ VÉ TÀU - RESET & INSERT DỮ LIỆU TOÀN DIỆN (FULL VERSION - FIXED SCHEMA)
+-- File: ResetAndInsertData.sql
 -- ========================================
 
 USE HTQLVT;
@@ -12,9 +11,10 @@ GO
 -- ========================================
 PRINT N'🗑️  Bắt đầu xóa dữ liệu cũ...';
 GO
-
-DELETE FROM ChiTietHoaDon;
 DELETE FROM ChiTietKhuyenMai;
+DELETE FROM ChiTietHoaDon;
+DELETE FROM ThongTinVeTam;
+DELETE FROM DonTreoDat;
 DELETE FROM Ve;
 DELETE FROM ChoNgoi;
 DELETE FROM Toa;
@@ -28,684 +28,282 @@ DELETE FROM KhuyenMai;
 DELETE FROM LoaiTau;
 DELETE FROM LoaiToa;
 DELETE FROM LoaiVe;
+DELETE FROM BangGioGa;
 DELETE FROM Ga;
 DELETE FROM Tuyen;
 GO
 
-PRINT N'✅ Đã xóa toàn bộ dữ liệu cũ';
-GO
+-- ========================================
+-- BƯỚC 2: CẤU HÌNH HỆ THỐNG (LOOKUP)
+-- ========================================
 
--- ========================================
--- BƯỚC 2: THÊM DỮ LIỆU MỚI
--- ========================================
-PRINT N'';
-PRINT N'📥 Bắt đầu thêm dữ liệu mới...';
-GO
+INSERT INTO LoaiTau VALUES ('SE', N'Tàu Khách Siêu Tốc'), ('TN', N'Tàu Thống Nhất'), ('SPT', N'Tàu Sài Gòn - Phan Thiết');
+INSERT INTO LoaiToa VALUES ('LTOA001', N'Ngồi mềm điều hòa'), ('LTOA002', N'Giường nằm 4 khoang'), ('LTOA003', N'Giường nằm 6 khoang');
+INSERT INTO LoaiVe (maLoaiVe, tenLoaiVe, mucGiamGia) VALUES ('LV01', N'Người lớn', 0.00), ('LV02', N'Sinh viên', 0.10), ('LV03', N'Trẻ em', 0.25), ('LV04', N'Người cao tuổi', 0.15);
 
--- ========================================
--- 1. LoaiTau (mã viết in hoa, không vượt quá 10 ký tự)
--- ========================================
-INSERT INTO LoaiTau (maLoaiTau, tenLoaiTau) VALUES 
-('SE', N'Tàu siêu tốc'),
-('TN', N'Tàu thống nhất'),
-('SPT', N'Tàu Sài Gòn Phan Thiết');
-GO
-
-PRINT N'✅ Đã thêm 3 LoaiTau';
-
--- ========================================
--- 2. LoaiToa (mã không vượt quá 10 ký tự)
--- ========================================
-INSERT INTO LoaiToa (maLoaiToa, tenLoaiToa) VALUES 
-('LTOA001', N'Ngồi mềm điều hòa'),
-('LTOA002', N'Giường nằm 4 khoang');
-GO
-
-PRINT N'✅ Đã thêm 2 LoaiToa';
-
--- ========================================
--- 3. LoaiVe (LVxx - xx từ 01, mucGiamGia từ 0-1)
--- ========================================
-INSERT INTO LoaiVe (maLoaiVe, tenLoaiVe, mucGiamGia) VALUES 
-('LV01', N'Người lớn', 0.00),
-('LV02', N'Sinh viên', 0.10),
-('LV03', N'Trẻ em', 0.25),
-('LV04', N'Người cao tuổi', 0.15);
-GO
-
-PRINT N'✅ Đã thêm 4 LoaiVe';
-
--- ========================================
--- 4. Ga (maGa viết tắt in hoa, không vượt quá 5 ký tự)
--- ========================================
 INSERT INTO Ga (maGa, tenGa, viTri) VALUES 
-('HN', N'Hà Nội', N'120 Lê Duẩn, Hà Nội'),
-('SG', N'Sài Gòn', N'1 Nguyễn Thông, Quận 3, TP.HCM'),
-('DN', N'Đà Nẵng', N'202 Hải Phòng, Đà Nẵng'),
-('HUE', N'Huế', N'2 Bùi Thị Xuân, Huế'),
-('NT', N'Nha Trang', N'17 Thái Nguyên, Nha Trang'),
-('PT', N'Phan Thiết', N'Lê Hồng Phong, Phan Thiết'),
-('QN', N'Quảng Ngãi', N'Đường Quang Trung, Quảng Ngãi'),
-('VT', N'Vũng Tàu', N'Đường 3 Tháng 2, Vũng Tàu');
+('HN', N'Hà Nội', N'120 Lê Duẩn, Hoàn Kiếm, Hà Nội'),
+('ND', N'Nam Định', N'Trần Đăng Ninh, TP. Nam Định'),
+('V', N'Vinh', N'01 Lệ Ninh, TP. Vinh, Nghệ An'),
+('HUE', N'Huế', N'02 Bùi Thị Xuân, TP. Huế'),
+('DN', N'Đà Nẵng', N'202 Hải Phòng, Q. Thanh Khê, Đà Nẵng'),
+('QN', N'Quảng Ngãi', N'01 Nguyễn Chánh, TP. Quảng Ngãi'),
+('NT', N'Nha Trang', N'17 Thái Nguyên, TP. Nha Trang'),
+('SG', N'Sài Gòn', N'01 Nguyễn Thông, Quận 3, TP.HCM');
+
+INSERT INTO Tuyen VALUES ('HN-SG', N'Tuyến Đường Sắt Bắc Nam (Xuôi)', 1726.0), ('SG-HN', N'Tuyến Đường Sắt Bắc Nam (Ngược)', 1726.0);
+INSERT INTO BangGioGa VALUES ('HN-SG', 'HN', 1, 0), ('HN-SG', 'ND', 2, 87), ('HN-SG', 'V', 3, 232), ('HN-SG', 'HUE', 4, 369), ('HN-SG', 'DN', 5, 103), ('HN-SG', 'QN', 6, 131), ('HN-SG', 'NT', 7, 500), ('HN-SG', 'SG', 8, 304);
+INSERT INTO BangGioGa VALUES ('SG-HN', 'SG', 1, 0), ('SG-HN', 'NT', 2, 304), ('SG-HN', 'QN', 3, 500), ('SG-HN', 'DN', 4, 131), ('SG-HN', 'HUE', 5, 103), ('SG-HN', 'V', 6, 369), ('SG-HN', 'ND', 7, 232), ('SG-HN', 'HN', 8, 87);
 GO
 
-PRINT N'✅ Đã thêm 8 Ga';
+-- 🚂 Đang khởi tạo đội tàu (SE1-SE10)
+INSERT INTO ChuyenTau (soHieuTau, maLoaiTau, tocDo, namSanXuat) VALUES 
+('SE1', 'SE', 120, 2020), ('SE3', 'SE', 120, 2021), ('SE5', 'SE', 120, 2020), ('SE7', 'SE', 120, 2022), ('SE9', 'SE', 120, 2021),
+('SE2', 'SE', 120, 2020), ('SE4', 'SE', 120, 2021), ('SE6', 'SE', 120, 2020), ('SE8', 'SE', 120, 2022), ('SE10', 'SE', 120, 2021);
 
--- ========================================
--- 5. Tuyen (AA-BB, không vượt quá 10 ký tự)
--- ========================================
-INSERT INTO Tuyen (maTuyen, tenTuyen, doDai) VALUES 
--- Tuyến Bắc - Nam chính
-('HN-SG', N'Tuyến Hà Nội TP.HCM', 1726.0),
-('SG-HN', N'Tuyến TP.HCM Hà Nội', 1726.0),
--- Tuyến Bắc - Trung
-('HN-DN', N'Tuyến Hà Nội Đà Nẵng', 791.0),
-('DN-HN', N'Tuyến Đà Nẵng Hà Nội', 791.0),
--- Tuyến Bắc - Trung (Huế)
-('HN-HUE', N'Tuyến Hà Nội Huế', 658.0),
-('HUE-HN', N'Tuyến Huế Hà Nội', 658.0),
--- Tuyến Nam - Duyên hải
-('SG-NT', N'Tuyến TP.HCM Nha Trang', 411.0),
-('NT-SG', N'Tuyến Nha Trang TP.HCM', 411.0),
--- Tuyến Nam ngắn
-('SG-PT', N'Tuyến TP.HCM Phan Thiết', 231.0),
-('PT-SG', N'Tuyến Phan Thiết TP.HCM', 231.0);
-GO
+-- Khởi tạo Toa cho tất cả các tàu (mỗi tàu 10 toa)
+INSERT INTO Toa (maToa, soHieuTau, soToa, maLoaiToa)
+SELECT CONCAT('T', soHieuTau, '-', FORMAT(n, '00')), soHieuTau, n, 
+       CASE 
+            WHEN n <= 5 THEN 'LTOA001' -- Toa 1-5: Ngồi mềm
+            ELSE 'LTOA003'             -- Toa 6-10: Giường nằm 6
+       END
+FROM ChuyenTau CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS T(n);
 
-PRINT N'✅ Đã thêm 10 Tuyen';
+-- Tạo ghế/giường cho từng loại toa
+DECLARE @t INT = 1;
 
--- ========================================
--- 6. ChuyenTau (soHieuTau: PREFIXNN, không vượt quá 10 ký tự)
--- Số lẻ = từ HN đi, số chẵn = về HN
--- ========================================
-INSERT INTO ChuyenTau (soHieuTau, tocDo, maLoaiTau, namSanXuat) VALUES 
--- HN-SG & SG-HN
-('SE1', 90.0, 'SE', 2020), ('SE2', 90.0, 'SE', 2020),
-('SE3', 85.0, 'SE', 2019), ('SE4', 85.0, 'SE', 2019),
-('TN1', 70.0, 'TN', 2018), ('TN2', 70.0, 'TN', 2018),
--- HN-DN & DN-HN
-('SE7', 90.0, 'SE', 2020), ('SE8', 90.0, 'SE', 2020),
-('SE9', 85.0, 'SE', 2019), ('SE10', 85.0, 'SE', 2019),
-('TN11', 70.0, 'TN', 2018), ('TN12', 70.0, 'TN', 2018),
--- HN-HUE & HUE-HN
-('SE13', 90.0, 'SE', 2020), ('SE14', 90.0, 'SE', 2020),
-('SE15', 85.0, 'SE', 2019), ('SE16', 85.0, 'SE', 2019),
-('TN17', 70.0, 'TN', 2018), ('TN18', 70.0, 'TN', 2018),
--- SG-NT & NT-SG
-('SE19', 90.0, 'SE', 2021), ('SE20', 90.0, 'SE', 2021),
-('SE21', 85.0, 'SE', 2020), ('SE22', 85.0, 'SE', 2020),
-('TN23', 70.0, 'TN', 2019), ('TN24', 70.0, 'TN', 2019),
--- SG-PT & PT-SG
-('SPT25', 80.0, 'SPT', 2021), ('SPT26', 80.0, 'SPT', 2021),
-('SPT27', 75.0, 'SPT', 2020), ('SPT28', 75.0, 'SPT', 2020),
-('SPT29', 70.0, 'SPT', 2019), ('SPT30', 70.0, 'SPT', 2019);
-GO
-
-PRINT N'✅ Đã thêm 30 ChuyenTau';
-
--- ========================================
--- 7. Toa (maToa: Txx - không vượt quá 10 ký tự)
--- THEO FORMAT ĐÚNG: T01, T02,...T10
--- ========================================
-DECLARE @soHieuTau NVARCHAR(20);
-DECLARE @soToa INT;
-DECLARE @counter INT = 1;
-
-DECLARE train_cursor CURSOR FOR 
-SELECT soHieuTau FROM ChuyenTau ORDER BY soHieuTau;
-
-OPEN train_cursor;
-FETCH NEXT FROM train_cursor INTO @soHieuTau;
-
-WHILE @@FETCH_STATUS = 0
+-- 1. Tạo 64 ghế cho các Toa Ngồi Mềm (LTOA001)
+WHILE @t <= 64
 BEGIN
-    SET @soToa = 1;
-    WHILE @soToa <= 10
-    BEGIN
-        INSERT INTO Toa (maToa, soHieuTau, soToa, maLoaiToa)
-        VALUES (
-            'T' + RIGHT('00' + CAST(@counter AS NVARCHAR(3)), 3),  -- T001, T002, T003...
-            @soHieuTau,
-            @soToa,
-            CASE WHEN @soToa <= 5 THEN 'LTOA001' ELSE 'LTOA002' END
-        );
-        SET @soToa = @soToa + 1;
-        SET @counter = @counter + 1;
-    END
-    FETCH NEXT FROM train_cursor INTO @soHieuTau;
+    INSERT INTO ChoNgoi (maChoNgoi, maToa, viTri, gia, moTa) 
+    SELECT CONCAT(maToa, '-', FORMAT(@t, '00')), maToa, @t, 500000, N'Ghế ngồi mềm' 
+    FROM Toa WHERE maLoaiToa = 'LTOA001';
+    SET @t = @t + 1;
 END
 
-CLOSE train_cursor;
-DEALLOCATE train_cursor;
+-- 2. Tạo 42 giường cho các Toa Khoang 6 (LTOA003) - 7 khoang x 6 giường
+SET @t = 1;
+WHILE @t <= 42
+BEGIN
+    INSERT INTO ChoNgoi (maChoNgoi, maToa, viTri, gia, moTa) 
+    SELECT CONCAT(maToa, '-', FORMAT(@t, '00')), maToa, @t, 700000, N'Giường nằm khoang 6' 
+    FROM Toa WHERE maLoaiToa = 'LTOA003';
+    SET @t = @t + 1;
+END
+
+-- Lịch trình thực tế (5 chuyến/chiều/ngày)
+DECLARE @Ngay DATE = '2026-04-01';
+WHILE @Ngay <= '2026-05-31'
+BEGIN
+    DECLARE @ms NVARCHAR(10) = FORMAT(@Ngay, 'ddMMyy');
+    
+    -- HƯỚNG BẮC -> NAM (LẺ): SE1, SE3, SE5, SE7, SE9
+    INSERT INTO LichTrinh (maLichTrinh, soHieuTau, maTuyen, maGaDi, maGaDen, gioKhoiHanh, gioDenDuKien, trangThai)
+    VALUES ('LT1-'+@ms, 'SE1', 'HN-SG', 'HN', 'SG', CAST(@Ngay AS DATETIME)+' 06:00', CAST(@Ngay AS DATETIME)+' 20:00', 1),
+           ('LT3-'+@ms, 'SE3', 'HN-SG', 'HN', 'SG', CAST(@Ngay AS DATETIME)+' 09:00', CAST(@Ngay AS DATETIME)+' 23:30', 1),
+           ('LT5-'+@ms, 'SE5', 'HN-SG', 'HN', 'SG', CAST(@Ngay AS DATETIME)+' 15:00', CAST(@Ngay AS DATETIME)+' 05:00', 1),
+           ('LT7-'+@ms, 'SE7', 'HN-SG', 'HN', 'SG', CAST(@Ngay AS DATETIME)+' 19:00', CAST(@Ngay AS DATETIME)+' 09:00', 1),
+           ('LT9-'+@ms, 'SE9', 'HN-SG', 'HN', 'SG', CAST(@Ngay AS DATETIME)+' 22:00', CAST(@Ngay AS DATETIME)+' 12:00', 1);
+    
+    -- HƯỚNG NAM -> BẮC (CHẴN): SE2, SE4, SE6, SE8, SE10
+    INSERT INTO LichTrinh (maLichTrinh, soHieuTau, maTuyen, maGaDi, maGaDen, gioKhoiHanh, gioDenDuKien, trangThai)
+    VALUES ('LT2-'+@ms, 'SE2', 'SG-HN', 'SG', 'HN', CAST(@Ngay AS DATETIME)+' 06:00', CAST(@Ngay AS DATETIME)+' 20:00', 1),
+           ('LT4-'+@ms, 'SE4', 'SG-HN', 'SG', 'HN', CAST(@Ngay AS DATETIME)+' 09:00', CAST(@Ngay AS DATETIME)+' 23:30', 1),
+           ('LT6-'+@ms, 'SE6', 'SG-HN', 'SG', 'HN', CAST(@Ngay AS DATETIME)+' 15:00', CAST(@Ngay AS DATETIME)+' 05:00', 1),
+           ('LT8-'+@ms, 'SE8', 'SG-HN', 'SG', 'HN', CAST(@Ngay AS DATETIME)+' 19:00', CAST(@Ngay AS DATETIME)+' 09:00', 1),
+           ('LT10-'+@ms, 'SE10', 'SG-HN', 'SG', 'HN', CAST(@Ngay AS DATETIME)+' 22:00', CAST(@Ngay AS DATETIME)+' 12:00', 1);
+    
+    SET @Ngay = DATEADD(DAY, 1, @Ngay);
+END
 GO
 
-PRINT N'✅ Đã thêm 300 Toa (T001-T300)';
+-- ========================================
+-- BƯỚC 3: NHÂN VIÊN & TÀI KHOẢN
+-- ========================================
+INSERT INTO NhanVien (maNhanVien, CCCD, hoTen, chucVu, trangThai, SDT, email, diaChi, ngaySinh, ngayVaoLam, gioiTinh) VALUES 
+('NV001', '001099123456', N'Nguyễn Văn Quản Lý', 0, 1, '0901234567', 'admin@railway.com', N'123 Lê Duẩn, Hà Nội', '1985-05-20', '2020-01-01', N'Nam'), 
+('NV002', '001099654321', N'Trần Thị Bán Vé', 1, 1, '0907654321', 'nv01@railway.com', N'456 Trần Hưng Đạo, Đà Nẵng', '1995-10-15', '2022-03-10', N'Nữ'),
+('NV003', '001099888777', N'Lê Minh Nhân Viên', 1, 1, '0912888777', 'nv02@railway.com', N'789 Nguyễn Thông, TP.HCM', '1990-02-28', '2021-06-15', N'Nam');
+
+INSERT INTO TaiKhoan VALUES 
+('admin', '123456', 'NV001'), 
+('nv01', '123456', 'NV002'),
+('nv02', '123456', 'NV003');
 
 -- ========================================
--- 8. ChoNgoi (maChoNgoi: XXYY - XX là toa, YY là ghế)
--- VD: 0101 = toa 01, ghế 01
+-- BƯỚC 4: KHÁCH HÀNG
 -- ========================================
-DECLARE @maToa NVARCHAR(20);
-DECLARE @soToa INT;
-DECLARE @soGhe INT;
-DECLARE @maxGhe INT;
-DECLARE @giaGhe DECIMAL(10,2);
-DECLARE @maToaNumber INT;
+INSERT INTO KhachHang (maKH, CCCD, hoTen, doiTuong, SDT, Email) VALUES 
+('KH001', '079123456789', N'Phạm Minh Long', N'Người lớn', '0901234567', 'long@gmail.com'), 
+('KH002', '079987654321', N'Lê Thị Hoa', N'Sinh viên', '0908887776', 'hoa@student.edu.vn'),
+('KH003', '079111222333', N'Nguyễn Văn Hùng', N'Người cao tuổi', '0912345678', 'hung@gmail.com'),
+('KH004', '079444555666', N'Trần Bảo Nam', N'Trẻ em', '0987654321', 'nam@gmail.com'),
+('KH005', '079777888999', N'Hoàng Thùy Linh', N'Người lớn', '0909990001', 'linh@gmail.com');
 
-DECLARE toa_cursor CURSOR FOR 
-SELECT maToa, soToa 
-FROM Toa
-ORDER BY maToa;
+-- =============================================
+-- BƯỚC 5: KHUYẾN MÃI (KMKH & KMHD)
+-- =============================================
+INSERT INTO KhuyenMai (maKhuyenMai, tenKhuyenMai, loaiKhuyenMai, thoiGianBatDau, thoiGianKetThuc, trangThai) VALUES 
+('KM0101202401', N'Giảm 25% cho Trẻ em (6-10 tuổi)', 'KMKH', '2024-01-01', '2099-12-31', 1),
+('KM0101202402', N'Giảm 15% cho Người cao tuổi (≥60 tuổi)', 'KMKH', '2024-01-01', '2099-12-31', 1),
+('KM0101202403', N'Giảm 10% cho Sinh viên', 'KMKH', '2024-01-01', '2099-12-31', 1),
+('KM0101202404', N'Giảm 9% khi đặt 11-40 vé', 'KMHD', '2024-01-01', '2099-12-31', 1),
+('KM0101202405', N'Giảm 11% khi đặt 42-70 vé', 'KMHD', '2024-01-01', '2099-12-31', 1),
+('KM0101202406', N'Giảm 13% khi đặt 71-100 vé', 'KMHD', '2024-01-01', '2099-12-31', 1),
+('KM0101202407', N'Giảm 15% khi đặt từ 100 vé trở lên', 'KMHD', '2024-01-01', '2099-12-31', 1);
 
-OPEN toa_cursor;
-FETCH NEXT FROM toa_cursor INTO @maToa, @soToa;
+INSERT INTO ChiTietKhuyenMai (maKhuyenMai, maHoaDon, dieuKien, chietKhau) VALUES 
+('KM0101202401', NULL, N'TreEm', 0.25),
+('KM0101202402', NULL, N'NguoiCaoTuoi', 0.15),
+('KM0101202403', NULL, N'SinhVien', 0.10),
+('KM0101202404', NULL, N'11-40 vé', 0.09),
+('KM0101202405', NULL, N'42-70 vé', 0.11),
+('KM0101202406', NULL, N'71-100 vé', 0.13),
+('KM0101202407', NULL, N'≥100 vé', 0.15);
 
--- Lấy số thứ tự toa từ maToa (T001 -> 1, T002 -> 2,...)
-SET @maToaNumber = 1;
+-- ========================================
+-- BƯỚC 6: HÓA ĐƠN & VÉ (DỮ LIỆU LỊCH SỬ & THỐNG KÊ)
+-- ========================================
 
-WHILE @@FETCH_STATUS = 0
+-- --- THÁNG 4/2026 ---
+PRINT N'📊 Đang tạo dữ liệu lịch sử tháng 4...';
+INSERT INTO HoaDon (maHoaDon, maNhanVien, maKH, ngayTao, gioTao, tongTien, trangThai) VALUES 
+('HD001', 'NV002', 'KH001', '2026-04-10', '2026-04-10 09:00', 1000000, 1),
+('HD002', 'NV002', 'KH002', '2026-04-15', '2026-04-15 14:00', 2400000, 1),
+('HD003', 'NV003', 'KH003', '2026-04-20', '2026-04-20 10:00', 500000, 1);
+
+INSERT INTO Ve (maVe, maLoaiVe, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, trangThai, maGaDi, maGaDen, tenKhachHang, soCCCD) VALUES 
+('V001', 'LV01', '2026-04-10 06:00', 500000, 'KH001', 'TSE1-01-01', 'LT1-100426', 1, 'HN', 'V', N'Phạm Minh Long', '079123456789'),
+('V002', 'LV01', '2026-04-10 06:00', 500000, 'KH001', 'TSE1-01-02', 'LT1-100426', 1, 'HN', 'V', N'Nguyễn Thị Bé', '079111222333'),
+('V003', 'LV02', '2026-04-15 06:00', 1200000, 'KH002', 'TSE1-04-01', 'LT1-150426', 1, 'HN', 'SG', N'Lê Thị Hoa', '079987654321'),
+('V004', 'LV02', '2026-04-15 06:00', 1200000, 'KH002', 'TSE1-04-02', 'LT1-150426', 1, 'HN', 'SG', N'Trần Văn Tèo', '079000111222'),
+('V005', 'LV04', '2026-04-20 06:00', 500000, 'KH003', 'TSE2-01-01', 'LT2-200426', 1, 'SG', 'HN', N'Nguyễn Văn Hùng', '079111222333');
+
+INSERT INTO ChiTietHoaDon (maHoaDon, maVe, soLuong, giaVe, mucGiam) VALUES 
+('HD001', 'V001', 1, 500000, 0), ('HD001', 'V002', 1, 500000, 0),
+('HD002', 'V003', 1, 1200000, 0), ('HD002', 'V004', 1, 1200000, 0),
+('HD003', 'V005', 1, 500000, 0);
+
+-- --- THÁNG 5/2026 (THÁNG HIỆN TẠI) ---
+PRINT N'📊 Đang tạo dữ liệu tháng 5...';
+INSERT INTO HoaDon (maHoaDon, maNhanVien, maKH, ngayTao, gioTao, tongTien, trangThai) VALUES 
+('HD004', 'NV002', 'KH001', '2026-05-01', '2026-05-01 08:00', 450000, 1),
+('HD005', 'NV002', 'KH002', '2026-05-02', '2026-05-02 10:00', 900000, 1),
+('HD006', 'NV003', 'KH004', '2026-05-03', '2026-05-03 11:00', 150000, 1),
+('HD007', 'NV002', 'KH005', '2026-05-05', '2026-05-05 14:00', 2100000, 1),
+('HD008', 'NV002', 'KH001', '2026-05-07', '2026-05-07 16:00', 300000, 1);
+
+INSERT INTO Ve (maVe, maLoaiVe, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, trangThai, maGaDi, maGaDen, tenKhachHang, soCCCD) VALUES 
+('V006', 'LV01', '2026-05-01 06:00', 450000, 'KH001', 'TSE1-01-05', 'LT1-010526', 1, 'HN', 'V', N'Phạm Minh Long', '079123456789'),
+('V007', 'LV02', '2026-05-02 06:00', 900000, 'KH002', 'TSE1-02-05', 'LT1-020526', 1, 'HN', 'HUE', N'Lê Thị Hoa', '079987654321'),
+('V008', 'LV03', '2026-05-03 06:00', 150000, 'KH004', 'TSE1-03-05', 'LT1-030526', 1, 'HN', 'ND', N'Trần Bảo Nam', '079444555666'),
+('V009', 'LV01', '2026-05-05 06:00', 700000, 'KH005', 'TSE1-05-05', 'LT1-050526', 1, 'HN', 'DN', N'Hoàng Thùy Linh', '0909990001'),
+('V010', 'LV01', '2026-05-05 06:00', 700000, 'KH005', 'TSE1-05-06', 'LT1-050526', 1, 'HN', 'DN', N'Nguyễn Văn A', '123456789001'),
+('V011', 'LV01', '2026-05-05 06:00', 700000, 'KH005', 'TSE1-05-07', 'LT1-050526', 1, 'HN', 'DN', N'Trần Văn B', '123456789002'),
+('V012', 'LV01', '2026-05-07 06:00', 300000, 'KH001', 'TSE1-01-07', 'LT1-070526', 0, 'V', 'HUE', N'Phạm Minh Long', '079123456789');
+
+INSERT INTO ChiTietHoaDon (maHoaDon, maVe, soLuong, giaVe, mucGiam) VALUES 
+('HD004', 'V006', 1, 450000, 0), ('HD005', 'V007', 1, 900000, 0),
+('HD006', 'V008', 1, 150000, 0), ('HD007', 'V009', 1, 700000, 0),
+('HD007', 'V010', 1, 700000, 0), ('HD007', 'V011', 1, 700000, 0),
+('HD008', 'V012', 1, 300000, 0);
+
+-- Gán khuyến mãi cho hóa đơn đã thanh toán
+INSERT INTO ChiTietKhuyenMai (maKhuyenMai, maHoaDon, dieuKien, chietKhau) VALUES 
+('KM0101202403', 'HD002', N'Sinh viên', 240000),
+('KM0101202404', 'HD007', N'11-40 vé', 189000);
+
+-- --- DỮ LIỆU VÉ ĐẶT TRƯỚC (TEST SƠ ĐỒ GHẾ & CHẶNG) ---
+PRINT N'📊 Đang tạo dữ liệu vé đặt trước...';
+INSERT INTO Ve (maVe, maLoaiVe, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, trangThai, maGaDi, maGaDen, tenKhachHang, soCCCD) VALUES 
+('V_TEST_1', 'LV01', '2026-05-10 06:00', 400000, 'KH001', 'TSE1-01-10', 'LT1-100526', 1, 'HN', 'V', N'Người Test 1', '111222333444'),
+('V_TEST_2', 'LV01', '2026-05-10 06:00', 400000, 'KH003', 'TSE1-02-10', 'LT1-100526', 1, 'HUE', 'SG', N'Người Test 2', '555666777888');
+
+PRINT N'✅ Đã hoàn tất nạp dữ liệu TOÀN DIỆN & FIX LỖI!';
+GO
+
+-- ========================================
+-- DỮ LIỆU BỔ SUNG ĐỂ TEST BIỂU ĐỒ GHẾ TRỐNG (TODAY: 2026-05-08)
+-- ========================================
+PRINT N'📊 Đang nạp dữ liệu vé đa dạng cho TẤT CẢ các tàu hôm nay...';
+
+-- Xóa dữ liệu vé test cũ nếu có để tránh trùng mã
+DELETE FROM Ve WHERE maVe LIKE 'V_TEST_0805%';
+
+DECLARE @t_id INT = 1;
+DECLARE @tau_num INT = 1;
+DECLARE @so_ve_ban INT;
+DECLARE @ma_lt NVARCHAR(50);
+DECLARE @so_hieu_tau NVARCHAR(10);
+
+WHILE @tau_num <= 10
 BEGIN
-    IF @soToa <= 5
+    SET @so_hieu_tau = 'SE' + CAST(@tau_num AS NVARCHAR);
+    SET @ma_lt = (CASE WHEN @tau_num % 2 <> 0 THEN 'LT' ELSE 'LT' END) + CAST(@tau_num AS NVARCHAR) + '-080526';
+    
+    -- Thiết lập số lượng vé bán khác nhau cho mỗi tàu để biểu đồ có sự phân bậc
+    SET @so_ve_ban = 320 - (@tau_num * 30); 
+    IF @so_ve_ban < 0 SET @so_ve_ban = 10;
+
+    -- Xác định Ga Đi/Ga Đến dựa trên số hiệu tàu (Lẻ: Xuôi Nam, Chẵn: Ngược Bắc)
+    DECLARE @gDi NVARCHAR(10), @gDen NVARCHAR(10);
+    IF @tau_num % 2 <> 0 
     BEGIN
-        SET @maxGhe = 64;
-        SET @giaGhe = 200000.0;
+        -- Chiều đi Nam
+        SET @gDi = CASE WHEN @tau_num = 1 THEN 'HN' WHEN @tau_num = 3 THEN 'V' ELSE 'HUE' END;
+        SET @gDen = CASE WHEN @tau_num = 1 THEN 'SG' WHEN @tau_num = 3 THEN 'DN' ELSE 'SG' END;
     END
     ELSE
     BEGIN
-        SET @maxGhe = 36;
-        SET @giaGhe = 350000.0;
+        -- Chiều đi Bắc
+        SET @gDi = CASE WHEN @tau_num = 2 THEN 'SG' WHEN @tau_num = 4 THEN 'NT' ELSE 'DN' END;
+        SET @gDen = CASE WHEN @tau_num = 2 THEN 'HN' WHEN @tau_num = 4 THEN 'V' ELSE 'HN' END;
     END
-    
-    SET @soGhe = 1;
-    WHILE @soGhe <= @maxGhe
+
+    PRINT N'   > Đang nạp ' + CAST(@so_ve_ban AS NVARCHAR) + N' vé cho tàu ' + @so_hieu_tau + ' (' + @gDi + ' -> ' + @gDen + ')';
+
+    DECLARE @v INT = 1;
+    DECLARE @current_toa INT = 1;
+    DECLARE @current_ghe INT = 1;
+    DECLARE @max_ghe_in_toa INT;
+
+    WHILE @v <= @so_ve_ban
     BEGIN
-        INSERT INTO ChoNgoi (maChoNgoi, maToa, viTri, gia, moTa)
+        -- Xác định số ghế tối đa của toa hiện tại
+        SET @max_ghe_in_toa = CASE 
+            WHEN @current_toa <= 5 THEN 64 
+            ELSE 42 END;
+
+        -- Nếu ghế hiện tại vượt quá số ghế của toa, chuyển sang toa tiếp theo
+        IF @current_ghe > @max_ghe_in_toa
+        BEGIN
+            SET @current_toa = @current_toa + 1;
+            SET @current_ghe = 1;
+            -- Cập nhật lại số ghế tối đa cho toa mới
+            SET @max_ghe_in_toa = CASE 
+                WHEN @current_toa <= 5 THEN 64 
+                ELSE 42 END;
+        END
+
+        IF @current_toa > 10 BREAK; -- Dừng nếu hết 10 toa
+
+        DECLARE @ma_toa NVARCHAR(20) = 'T' + @so_hieu_tau + '-' + FORMAT(@current_toa, '00');
+        
+        INSERT INTO Ve (maVe, maLoaiVe, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, trangThai, maGaDi, maGaDen, tenKhachHang, soCCCD)
         VALUES (
-            RIGHT('000' + CAST(@maToaNumber AS NVARCHAR(10)), 3) + 
-            RIGHT('00' + CAST(@soGhe AS NVARCHAR(10)), 2),  -- Format: XXXYY
-            @maToa,
-            @soGhe,
-            @giaGhe,
-            N'Ghế số ' + CAST(@soGhe AS NVARCHAR(10))
+            CONCAT('V_TEST_0805_', @so_hieu_tau, '_', FORMAT(@v, '000')), 
+            'LV01', '2026-05-08 08:00', 500000, 'KH001', 
+            CONCAT(@ma_toa, '-', FORMAT(@current_ghe, '00')), 
+            @ma_lt, 1, @gDi, @gDen, N'Khách Test', '123456789'
         );
-        SET @soGhe = @soGhe + 1;
+        
+        SET @current_ghe = @current_ghe + 1;
+        SET @v = @v + 1;
     END
-    
-    SET @maToaNumber = @maToaNumber + 1;
-    FETCH NEXT FROM toa_cursor INTO @maToa, @soToa;
+
+    SET @tau_num = @tau_num + 1;
 END
 
-CLOSE toa_cursor;
-DEALLOCATE toa_cursor;
-GO
-
-PRINT N'✅ Đã thêm 15,000+ ChoNgoi (format XXYY)';
-
--- ========================================
--- 9. LichTrinh (maLichTrinh: LTxxx-ddMMyyxx)
--- VD: LTSE1-18122501 (tàu SE1, ngày 18/12/25, lần 01)
--- TĂNG TỪ 10 NGÀY LÊN 30 NGÀY
--- ========================================
-DECLARE @NgayBatDau DATE = CAST(GETDATE() AS DATE);
-DECLARE @NgayKetThuc DATE = DATEADD(DAY, 29, @NgayBatDau);  -- 30 ngày
-DECLARE @NgayHienTai DATE = @NgayBatDau;
-DECLARE @ngayStr NVARCHAR(6);
-DECLARE @lanChay INT;
-
-WHILE @NgayHienTai <= @NgayKetThuc
-BEGIN
-    SET @ngayStr = FORMAT(@NgayHienTai, 'ddMMyy');  -- ddMMyy format
-    
-    -- ===== TUYẾN 1: HN ↔ SG =====
-    INSERT INTO LichTrinh (maLichTrinh, soHieuTau, maGaDi, maGaDen, gioKhoiHanh, gioDenDuKien, maTuyen, trangThai) VALUES 
-    ('LTSE1-' + @ngayStr + '01', 'SE1', 'HN', 'SG', 
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 06:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 12:00:00') AS DATETIME2(0)), 'HN-SG', 1),
-    ('LTSE3-' + @ngayStr + '01', 'SE3', 'HN', 'SG',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 12:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 18:00:00') AS DATETIME2(0)), 'HN-SG', 1),
-    ('LTTN1-' + @ngayStr + '01', 'TN1', 'HN', 'SG',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 19:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 2, @NgayHienTai), 'yyyy-MM-dd'), ' 04:00:00') AS DATETIME2(0)), 'HN-SG', 1),
-    ('LTSE2-' + @ngayStr + '01', 'SE2', 'SG', 'HN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 07:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 13:00:00') AS DATETIME2(0)), 'SG-HN', 1),
-    ('LTSE4-' + @ngayStr + '01', 'SE4', 'SG', 'HN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 13:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 19:00:00') AS DATETIME2(0)), 'SG-HN', 1),
-    ('LTTN2-' + @ngayStr + '01', 'TN2', 'SG', 'HN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 20:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 2, @NgayHienTai), 'yyyy-MM-dd'), ' 05:00:00') AS DATETIME2(0)), 'SG-HN', 1);
-    
-    -- ===== TUYẾN 2: HN ↔ DN =====
-    INSERT INTO LichTrinh (maLichTrinh, soHieuTau, maGaDi, maGaDen, gioKhoiHanh, gioDenDuKien, maTuyen, trangThai) VALUES 
-    ('LTSE7-' + @ngayStr + '01', 'SE7', 'HN', 'DN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 07:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 20:00:00') AS DATETIME2(0)), 'HN-DN', 1),
-    ('LTSE9-' + @ngayStr + '01', 'SE9', 'HN', 'DN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 14:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 03:00:00') AS DATETIME2(0)), 'HN-DN', 1),
-    ('LTTN11-' + @ngayStr + '01', 'TN11', 'HN', 'DN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 21:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 11:00:00') AS DATETIME2(0)), 'HN-DN', 1),
-    ('LTSE8-' + @ngayStr + '01', 'SE8', 'DN', 'HN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 08:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 21:00:00') AS DATETIME2(0)), 'DN-HN', 1),
-    ('LTSE10-' + @ngayStr + '01', 'SE10', 'DN', 'HN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 15:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 04:00:00') AS DATETIME2(0)), 'DN-HN', 1),
-    ('LTTN12-' + @ngayStr + '01', 'TN12', 'DN', 'HN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 22:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 12:00:00') AS DATETIME2(0)), 'DN-HN', 1);
-    
-    -- ===== TUYẾN 3: HN ↔ HUE =====
-    INSERT INTO LichTrinh (maLichTrinh, soHieuTau, maGaDi, maGaDen, gioKhoiHanh, gioDenDuKien, maTuyen, trangThai) VALUES 
-    ('LTSE13-' + @ngayStr + '01', 'SE13', 'HN', 'HUE',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 08:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 20:00:00') AS DATETIME2(0)), 'HN-HUE', 1),
-    ('LTSE15-' + @ngayStr + '01', 'SE15', 'HN', 'HUE',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 15:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 03:00:00') AS DATETIME2(0)), 'HN-HUE', 1),
-    ('LTTN17-' + @ngayStr + '01', 'TN17', 'HN', 'HUE',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 22:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 10:00:00') AS DATETIME2(0)), 'HN-HUE', 1),
-    ('LTSE14-' + @ngayStr + '01', 'SE14', 'HUE', 'HN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 09:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 21:00:00') AS DATETIME2(0)), 'HUE-HN', 1),
-    ('LTSE16-' + @ngayStr + '01', 'SE16', 'HUE', 'HN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 16:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 04:00:00') AS DATETIME2(0)), 'HUE-HN', 1),
-    ('LTTN18-' + @ngayStr + '01', 'TN18', 'HUE', 'HN',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 23:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 11:00:00') AS DATETIME2(0)), 'HUE-HN', 1);
-    
-    -- ===== TUYẾN 4: SG ↔ NT =====
-    INSERT INTO LichTrinh (maLichTrinh, soHieuTau, maGaDi, maGaDen, gioKhoiHanh, gioDenDuKien, maTuyen, trangThai) VALUES 
-    ('LTSE19-' + @ngayStr + '01', 'SE19', 'SG', 'NT',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 06:30:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 15:00:00') AS DATETIME2(0)), 'SG-NT', 1),
-    ('LTSE21-' + @ngayStr + '01', 'SE21', 'SG', 'NT',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 13:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 21:30:00') AS DATETIME2(0)), 'SG-NT', 1),
-    ('LTTN23-' + @ngayStr + '01', 'TN23', 'SG', 'NT',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 20:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 06:00:00') AS DATETIME2(0)), 'SG-NT', 1),
-    ('LTSE20-' + @ngayStr + '01', 'SE20', 'NT', 'SG',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 07:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 15:30:00') AS DATETIME2(0)), 'NT-SG', 1),
-    ('LTSE22-' + @ngayStr + '01', 'SE22', 'NT', 'SG',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 14:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 22:30:00') AS DATETIME2(0)), 'NT-SG', 1),
-    ('LTTN24-' + @ngayStr + '01', 'TN24', 'NT', 'SG',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 21:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(DATEADD(DAY, 1, @NgayHienTai), 'yyyy-MM-dd'), ' 07:00:00') AS DATETIME2(0)), 'NT-SG', 1);
-    
-    -- ===== TUYẾN 5: SG ↔ PT =====
-    INSERT INTO LichTrinh (maLichTrinh, soHieuTau, maGaDi, maGaDen, gioKhoiHanh, gioDenDuKien, maTuyen, trangThai) VALUES 
-    ('LTSPT25-' + @ngayStr + '01', 'SPT25', 'SG', 'PT',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 07:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 11:00:00') AS DATETIME2(0)), 'SG-PT', 1),
-    ('LTSPT27-' + @ngayStr + '01', 'SPT27', 'SG', 'PT',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 13:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 17:00:00') AS DATETIME2(0)), 'SG-PT', 1),
-    ('LTSPT29-' + @ngayStr + '01', 'SPT29', 'SG', 'PT',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 18:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 22:00:00') AS DATETIME2(0)), 'SG-PT', 1),
-    ('LTSPT26-' + @ngayStr + '01', 'SPT26', 'PT', 'SG',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 08:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 12:00:00') AS DATETIME2(0)), 'PT-SG', 1),
-    ('LTSPT28-' + @ngayStr + '01', 'SPT28', 'PT', 'SG',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 14:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 18:00:00') AS DATETIME2(0)), 'PT-SG', 1),
-    ('LTSPT30-' + @ngayStr + '01', 'SPT30', 'PT', 'SG',
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 19:00:00') AS DATETIME2(0)),
-     CAST(CONCAT(FORMAT(@NgayHienTai, 'yyyy-MM-dd'), ' 23:00:00') AS DATETIME2(0)), 'PT-SG', 1);
-    
-    SET @NgayHienTai = DATEADD(DAY, 1, @NgayHienTai);
-END
-GO
-
-PRINT N'✅ Đã thêm 900 LichTrinh (format LTxxx-ddMMyyxx) - 30 ngày';
-
--- ========================================
--- 10. NhanVien (maNhanVien: NVaabbxxxx)
--- aa = 2 số cuối năm vào làm, bb = 2 số cuối năm sinh, xxxx = số tự tăng
--- TĂNG TỪ 3 LÊN 15 NHÂN VIÊN
--- ========================================
-INSERT INTO NhanVien (maNhanVien, CCCD, hoTen, SDT, email, diaChi, chucVu, ngaySinh, ngayVaoLam, trangThai, gioiTinh)
-VALUES 
--- Quản lý (chucVu = 0)
-('NV24900001', '001234567890', N'Nguyễn Văn An', '0901234567', 'nva@railway.vn', N'Hà Nội', 0, '1990-01-01', '2024-03-01', 1, N'Nam'),
-('NV24880002', '001234567899', N'Phạm Văn Bình', '0901234577', 'pvb@railway.vn', N'Hà Nội', 0, '1988-03-15', '2024-03-01', 1, N'Nam'),
--- Nhân viên (chucVu = 1)
-('NV24950003', '001234567891', N'Trần Thị Bình', '0901234568', 'ttb@railway.vn', N'TP.HCM', 1, '1995-05-15', '2024-03-01', 1, N'Nữ'),
-('NV24920004', '001234567892', N'Lê Văn Cường', '0901234569', 'lvc@railway.vn', N'Đà Nẵng', 1, '1992-08-20', '2024-03-01', 1, N'Nam'),
-('NV24930005', '001234567893', N'Hoàng Thị Dung', '0901234570', 'htd@railway.vn', N'Hà Nội', 1, '1993-02-10', '2024-03-01', 1, N'Nữ'),
-('NV24940006', '001234567894', N'Vũ Văn Em', '0901234571', 'vve@railway.vn', N'TP.HCM', 1, '1994-07-25', '2024-03-01', 1, N'Nam'),
-('NV24960007', '001234567895', N'Đỗ Thị Phượng', '0901234572', 'dtp@railway.vn', N'Huế', 1, '1996-11-30', '2024-03-01', 1, N'Nữ'),
-('NV24910008', '001234567896', N'Bùi Văn Giang', '0901234573', 'bvg@railway.vn', N'Đà Nẵng', 1, '1991-04-18', '2024-03-01', 1, N'Nam'),
-('NV24970009', '001234567897', N'Mai Thị Hoa', '0901234574', 'mth@railway.vn', N'Nha Trang', 1, '1997-09-05', '2024-03-01', 1, N'Nữ'),
-('NV24890010', '001234567898', N'Lý Văn Khoa', '0901234575', 'lvk@railway.vn', N'TP.HCM', 1, '1989-12-22', '2024-03-01', 1, N'Nam'),
-('NV24950011', '001234578901', N'Ngô Thị Lan', '0901234576', 'ntl@railway.vn', N'Hà Nội', 1, '1995-06-14', '2024-03-01', 1, N'Nữ'),
-('NV24920012', '001234578902', N'Trương Văn Minh', '0901234578', 'tvm@railway.vn', N'Đà Nẵng', 1, '1992-01-08', '2024-03-01', 1, N'Nam'),
-('NV24980013', '001234578903', N'Cao Thị Nga', '0901234579', 'ctn@railway.vn', N'Phan Thiết', 1, '1998-03-20', '2024-03-01', 1, N'Nữ'),
-('NV24930014', '001234578904', N'Đinh Văn Oanh', '0901234580', 'dvo@railway.vn', N'TP.HCM', 1, '1993-10-12', '2024-03-01', 1, N'Nam'),
-('NV24960015', '001234578905', N'Phan Thị Phương', '0901234581', 'ptp@railway.vn', N'Quảng Ngãi', 1, '1996-08-28', '2024-03-01', 1, N'Nữ');
-
-PRINT N'✅ Đã thêm 15 NhanVien (format NVaabbxxxx)';
-
--- ========================================
--- 11. TaiKhoan
--- TĂNG TỪ 3 LÊN 15 TÀI KHOẢN
--- ========================================
-INSERT INTO TaiKhoan (userName, passWord, maNhanVien)
-VALUES 
-('admin', '123456', 'NV24900001'),
-('quanly1', '123456', 'NV24880002'),
-('nhanvien1', '123456', 'NV24950003'),
-('nhanvien2', '123456', 'NV24920004'),
-('nhanvien3', '123456', 'NV24930005'),
-('nhanvien4', '123456', 'NV24940006'),
-('nhanvien5', '123456', 'NV24960007'),
-('nhanvien6', '123456', 'NV24910008'),
-('nhanvien7', '123456', 'NV24970009'),
-('nhanvien8', '123456', 'NV24890010'),
-('nhanvien9', '123456', 'NV24950011'),
-('nhanvien10', '123456', 'NV24920012'),
-('nhanvien11', '123456', 'NV24980013'),
-('nhanvien12', '123456', 'NV24930014'),
-('nhanvien13', '123456', 'NV24960015');
-
-PRINT N'✅ Đã thêm 15 TaiKhoan';
-
--- ========================================
--- 12. KhachHang (doiTuong: Trẻ em, Sinh viên, Người lớn, Người cao tuổi)
--- TĂNG TỪ 3 LÊN 50 KHÁCH HÀNG
--- ========================================
-INSERT INTO KhachHang (maKH, CCCD, hoTen, email, SDT, doiTuong)
-VALUES 
--- Người lớn (20 khách)
-('KH001', '079123456789', N'Lê Minh Tuấn', 'lmt@gmail.com', '0987654321', N'Người lớn'),
-('KH002', '079123456788', N'Trần Văn Bình', 'tvb@gmail.com', '0987654322', N'Người lớn'),
-('KH003', '079123456787', N'Nguyễn Thị Cúc', 'ntc@gmail.com', '0987654323', N'Người lớn'),
-('KH004', '079123456786', N'Hoàng Văn Dũng', 'hvd@gmail.com', '0987654324', N'Người lớn'),
-('KH005', '079123456785', N'Vũ Thị Em', 'vte@gmail.com', '0987654325', N'Người lớn'),
-('KH006', '079123456784', N'Đặng Văn Phong', 'dvp@gmail.com', '0987654326', N'Người lớn'),
-('KH007', '079123456783', N'Bùi Thị Giang', 'btg@gmail.com', '0987654327', N'Người lớn'),
-('KH008', '079123456782', N'Mai Văn Hải', 'mvh@gmail.com', '0987654328', N'Người lớn'),
-('KH009', '079123456781', N'Cao Thị Hương', 'cth@gmail.com', '0987654329', N'Người lớn'),
-('KH010', '079123456780', N'Lý Văn Khải', 'lvk@gmail.com', '0987654330', N'Người lớn'),
-('KH011', '079123456779', N'Phan Thị Lan', 'ptl@gmail.com', '0987654331', N'Người lớn'),
-('KH012', '079123456778', N'Trịnh Văn Minh', 'tvm@gmail.com', '0987654332', N'Người lớn'),
-('KH013', '079123456777', N'Đỗ Thị Nga', 'dtn@gmail.com', '0987654333', N'Người lớn'),
-('KH014', '079123456776', N'Võ Văn Oanh', 'vvo@gmail.com', '0987654334', N'Người lớn'),
-('KH015', '079123456775', N'Lưu Thị Phượng', 'ltp@gmail.com', '0987654335', N'Người lớn'),
-('KH016', '079123456774', N'Dương Văn Quân', 'dvq@gmail.com', '0987654336', N'Người lớn'),
-('KH017', '079123456773', N'Tạ Thị Rơ', 'ttr@gmail.com', '0987654337', N'Người lớn'),
-('KH018', '079123456772', N'Đinh Văn Sơn', 'dvs@gmail.com', '0987654338', N'Người lớn'),
-('KH019', '079123456771', N'Ninh Thị Tâm', 'ntt@gmail.com', '0987654339', N'Người lớn'),
-('KH020', '079123456770', N'Hồ Văn Út', 'hvu@gmail.com', '0987654340', N'Người lớn'),
-
--- Sinh viên (15 khách)
-('KH021', '079123456769', N'Phạm Thu Hà', 'pth@gmail.com', '0987654341', N'Sinh viên'),
-('KH022', '079123456768', N'Nguyễn Văn An', 'nva@gmail.com', '0987654342', N'Sinh viên'),
-('KH023', '079123456767', N'Lê Thị Bảo', 'ltb@gmail.com', '0987654343', N'Sinh viên'),
-('KH024', '079123456766', N'Trần Văn Cường', 'tvc@gmail.com', '0987654344', N'Sinh viên'),
-('KH025', '079123456765', N'Hoàng Thị Duyên', 'htd@gmail.com', '0987654345', N'Sinh viên'),
-('KH026', '079123456764', N'Vũ Văn Hùng', 'vvh@gmail.com', '0987654346', N'Sinh viên'),
-('KH027', '079123456763', N'Đặng Thị Kim', 'dtk@gmail.com', '0987654347', N'Sinh viên'),
-('KH028', '079123456762', N'Bùi Văn Long', 'bvl@gmail.com', '0987654348', N'Sinh viên'),
-('KH029', '079123456761', N'Mai Thị Ngọc', 'mtn@gmail.com', '0987654349', N'Sinh viên'),
-('KH030', '079123456760', N'Cao Văn Phát', 'cvp@gmail.com', '0987654350', N'Sinh viên'),
-('KH031', '079123456759', N'Lý Thị Quỳnh', 'ltq@gmail.com', '0987654351', N'Sinh viên'),
-('KH032', '079123456758', N'Phan Văn Rộng', 'pvr@gmail.com', '0987654352', N'Sinh viên'),
-('KH033', '079123456757', N'Trịnh Thị Sương', 'tts@gmail.com', '0987654353', N'Sinh viên'),
-('KH034', '079123456756', N'Đỗ Văn Thắng', 'dvt@gmail.com', '0987654354', N'Sinh viên'),
-('KH035', '079123456755', N'Võ Thị Uyên', 'vtu@gmail.com', '0987654355', N'Sinh viên'),
-
--- Người cao tuổi (10 khách)
-('KH036', '079123456754', N'Ngô Thị Mai', 'ntm@gmail.com', '0987654356', N'Người cao tuổi'),
-('KH037', '079123456753', N'Trần Văn Bá', 'tvba@gmail.com', '0987654357', N'Người cao tuổi'),
-('KH038', '079123456752', N'Lê Thị Chi', 'ltc@gmail.com', '0987654358', N'Người cao tuổi'),
-('KH039', '079123456751', N'Nguyễn Văn Đạt', 'nvd@gmail.com', '0987654359', N'Người cao tuổi'),
-('KH040', '079123456750', N'Hoàng Thị Hằng', 'hth@gmail.com', '0987654360', N'Người cao tuổi'),
-('KH041', '079123456749', N'Vũ Văn Kiên', 'vvk@gmail.com', '0987654361', N'Người cao tuổi'),
-('KH042', '079123456748', N'Đặng Thị Lệ', 'dtl@gmail.com', '0987654362', N'Người cao tuổi'),
-('KH043', '079123456747', N'Bùi Văn Nam', 'bvn@gmail.com', '0987654363', N'Người cao tuổi'),
-('KH044', '079123456746', N'Mai Thị Oanh', 'mto@gmail.com', '0987654364', N'Người cao tuổi'),
-('KH045', '079123456745', N'Cao Văn Phúc', 'cvph@gmail.com', '0987654365', N'Người cao tuổi'),
-
--- Trẻ em (5 khách)
-('KH046', '079123456744', N'Lý Văn Bé', 'lvb@gmail.com', '0987654366', N'Trẻ em'),
-('KH047', '079123456743', N'Phan Thị Con', 'ptc@gmail.com', '0987654367', N'Trẻ em'),
-('KH048', '079123456742', N'Trịnh Văn Đẹp', 'tvd@gmail.com', '0987654368', N'Trẻ em'),
-('KH049', '079123456741', N'Đỗ Thị Út', 'dtu@gmail.com', '0987654369', N'Trẻ em'),
-('KH050', '079123456740', N'Võ Văn Nhỏ', 'vvn@gmail.com', '0987654370', N'Trẻ em');
-
-PRINT N'✅ Đã thêm 50 KhachHang (20 người lớn + 15 sinh viên + 10 người cao tuổi + 5 trẻ em)';
-
--- ========================================
--- 13. KHUYẾN MÃI (maKhuyenMai: KMddMMyyyyxx)
--- ========================================
-PRINT N'';
-PRINT N'🎉 Bắt đầu thêm dữ liệu Khuyến Mãi...';
-
--- =============================================
--- PHẦN 1: KHUYẾN MÃI THEO ĐỐI TƯỢNG (KMKH)
--- =============================================
-
--- Trẻ em 6-10 tuổi: Giảm 25%
-INSERT INTO KhuyenMai (maKhuyenMai, tenKhuyenMai, loaiKhuyenMai, thoiGianBatDau, thoiGianKetThuc, trangThai)
-VALUES ('KM0101202401', N'Giảm 25% cho Trẻ em (6-10 tuổi)', 'KMKH', '2024-01-01', '2099-12-31', 1);
-
-INSERT INTO ChiTietKhuyenMai (maKhuyenMai, maHoaDon, dieuKien, chietKhau)
-VALUES ('KM0101202401', NULL, N'TreEm', 0.25);
-
--- Người cao tuổi ≥60 tuổi: Giảm 15%
-INSERT INTO KhuyenMai (maKhuyenMai, tenKhuyenMai, loaiKhuyenMai, thoiGianBatDau, thoiGianKetThuc, trangThai)
-VALUES ('KM0101202402', N'Giảm 15% cho Người cao tuổi (≥60 tuổi)', 'KMKH', '2024-01-01', '2099-12-31', 1);
-
-INSERT INTO ChiTietKhuyenMai (maKhuyenMai, maHoaDon, dieuKien, chietKhau)
-VALUES ('KM0101202402', NULL, N'NguoiCaoTuoi', 0.15);
-
--- Sinh viên: Giảm 10%
-INSERT INTO KhuyenMai (maKhuyenMai, tenKhuyenMai, loaiKhuyenMai, thoiGianBatDau, thoiGianKetThuc, trangThai)
-VALUES ('KM0101202403', N'Giảm 10% cho Sinh viên', 'KMKH', '2024-01-01', '2099-12-31', 1);
-
-INSERT INTO ChiTietKhuyenMai (maKhuyenMai, maHoaDon, dieuKien, chietKhau)
-VALUES ('KM0101202403', NULL, N'SinhVien', 0.10);
-
-PRINT N'✅ Đã thêm 3 Khuyến mãi Đối tượng (KMKH)';
-
--- =============================================
--- PHẦN 2: KHUYẾN MÃI THEO HÓA ĐƠN (KMHD)
--- =============================================
-
--- 11-40 vé: Giảm 9%
-INSERT INTO KhuyenMai (maKhuyenMai, tenKhuyenMai, loaiKhuyenMai, thoiGianBatDau, thoiGianKetThuc, trangThai)
-VALUES ('KM0101202404', N'Giảm 9% khi đặt 11-40 vé', 'KMHD', '2024-01-01', '2099-12-31', 1);
-
-INSERT INTO ChiTietKhuyenMai (maKhuyenMai, maHoaDon, dieuKien, chietKhau)
-VALUES ('KM0101202404', NULL, N'11-40 vé', 0.09);
-
--- 42-70 vé: Giảm 11%
-INSERT INTO KhuyenMai (maKhuyenMai, tenKhuyenMai, loaiKhuyenMai, thoiGianBatDau, thoiGianKetThuc, trangThai)
-VALUES ('KM0101202405', N'Giảm 11% khi đặt 42-70 vé', 'KMHD', '2024-01-01', '2099-12-31', 1);
-
-INSERT INTO ChiTietKhuyenMai (maKhuyenMai, maHoaDon, dieuKien, chietKhau)
-VALUES ('KM0101202405', NULL, N'42-70 vé', 0.11);
-
--- 71-100 vé: Giảm 13%
-INSERT INTO KhuyenMai (maKhuyenMai, tenKhuyenMai, loaiKhuyenMai, thoiGianBatDau, thoiGianKetThuc, trangThai)
-VALUES ('KM0101202406', N'Giảm 13% khi đặt 71-100 vé', 'KMHD', '2024-01-01', '2099-12-31', 1);
-
-INSERT INTO ChiTietKhuyenMai (maKhuyenMai, maHoaDon, dieuKien, chietKhau)
-VALUES ('KM0101202406', NULL, N'71-100 vé', 0.13);
-
--- ≥100 vé: Giảm 15%
-INSERT INTO KhuyenMai (maKhuyenMai, tenKhuyenMai, loaiKhuyenMai, thoiGianBatDau, thoiGianKetThuc, trangThai)
-VALUES ('KM0101202407', N'Giảm 15% khi đặt từ 100 vé trở lên', 'KMHD', '2024-01-01', '2099-12-31', 1);
-
-INSERT INTO ChiTietKhuyenMai (maKhuyenMai, maHoaDon, dieuKien, chietKhau)
-VALUES ('KM0101202407', NULL, N'≥100 vé', 0.15);
-
-PRINT N'✅ Đã thêm 4 Khuyến mãi Hóa đơn (KMHD)';
-PRINT N'✅ Đã thêm 7 Chi tiết khuyến mãi vào ChiTietKhuyenMai';
-
--- ========================================
--- 14. HoaDon, Ve, ChiTietHoaDon (DỮ LIỆU MẪU)
--- ========================================
-PRINT N'';
-PRINT N'🎫 Bắt đầu thêm dữ liệu Hóa đơn & Vé mẫu...';
-
-DECLARE @today DATE = GETDATE();
-DECLARE @todayStr NVARCHAR(6) = FORMAT(@today, 'ddMMyy');
-
--- ----- THÊM DỮ LIỆU THÁNG TRƯỚC (Tháng 4) -----
-DECLARE @thangTruoc DATE = DATEADD(MONTH, -1, @today);
-DECLARE @thangTruocStr NVARCHAR(6) = '150426'; -- Giả định ngày 15/04/26
-
--- Cần có LichTrinh cho tháng trước để JOIN (Tạm thời dùng mã giả định hoặc tạo mới)
--- Để đơn giản, ta sẽ cho các vé tháng trước JOIN vào lịch trình hiện tại (vẫn ra được thống kê tháng)
--- Nhưng trong thực tế cần LichTrinh đúng tháng. Ở đây ta chỉ test hiển thị Doanh thu theo tháng.
-
-INSERT INTO HoaDon (maHoaDon, maNhanVien, maKH, gioTao, ngayTao, tongTien, trangThai) VALUES 
-('HD_T4_001', 'NV24900001', 'KH001', DATEADD(HOUR, 10, CAST(@thangTruoc AS DATETIME)), CAST(@thangTruoc AS DATE), 1000000.0, 1),
-('HD_T4_002', 'NV24900001', 'KH002', DATEADD(HOUR, 11, CAST(@thangTruoc AS DATETIME)), CAST(@thangTruoc AS DATE), 500000.0, 1);
-
-INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
-('VE_T4_001', 'LV01', 'V4001', @thangTruoc, 500000.0, 'KH001', '00103', 'LTSE1-01052601', 'T001', 1, N'Lê Minh Tuấn', '079123456789'),
-('VE_T4_002', 'LV01', 'V4002', @thangTruoc, 500000.0, 'KH001', '00104', 'LTSE1-01052601', 'T001', 1, N'Lê Minh Tuấn', '079123456789');
-
-INSERT INTO ChiTietHoaDon (maHoaDon, maVe, soLuong, giaVe, mucGiam) VALUES 
-('HD_T4_001', 'VE_T4_001', 1, 500000.0, 0),
-('HD_T4_001', 'VE_T4_002', 1, 500000.0, 0);
-
-
--- ----- THÊM DỮ LIỆU THÁNG NÀY (Tháng 5) -----
-
--- 1. Invoices
-INSERT INTO HoaDon (maHoaDon, maNhanVien, maKH, gioTao, ngayTao, tongTien, trangThai) VALUES 
-('HD_T5_001', 'NV24900001', 'KH001', GETDATE(), CAST(GETDATE() AS DATE), 1200000.0, 1),
-('HD_T5_002', 'NV24900001', 'KH021', GETDATE(), CAST(GETDATE() AS DATE), 800000.0, 1),
-('HD_T5_003', 'NV24900001', 'KH036', GETDATE(), CAST(GETDATE() AS DATE), 600000.0, 1),
-('HD_T5_004', 'NV24900001', 'KH046', GETDATE(), CAST(GETDATE() AS DATE), 300000.0, 1),
-('HD_T5_005', 'NV24900001', 'KH005', GETDATE(), CAST(GETDATE() AS DATE), 1000000.0, 1);
-
--- 2. Tickets for various routes
--- HN-SG
-INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
-('VE_T5_001', 'LV01', 'V5001', GETDATE(), 600000.0, 'KH001', '00105', 'LTSE1-' + @todayStr + '01', 'T001', 1, N'Lê Minh Tuấn', '079123456789'),
-('VE_T5_002', 'LV01', 'V5002', GETDATE(), 600000.0, 'KH001', '00106', 'LTSE1-' + @todayStr + '01', 'T001', 1, N'Lê Minh Tuấn', '079123456789');
-
--- HN-DN
-INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
-('VE_T5_003', 'LV02', 'V5003', GETDATE(), 400000.0, 'KH021', '06101', 'LTSE7-' + @todayStr + '01', 'T061', 1, N'Phạm Thu Hà', '079123456769'),
-('VE_T5_004', 'LV02', 'V5004', GETDATE(), 400000.0, 'KH021', '06102', 'LTSE7-' + @todayStr + '01', 'T061', 1, N'Phạm Thu Hà', '079123456769');
-
--- SG-NT
-INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
-('VE_T5_005', 'LV04', 'V5005', GETDATE(), 300000.0, 'KH036', '18101', 'LTSE19-' + @todayStr + '01', 'T181', 1, N'Ngô Thị Mai', '079123456754'),
-('VE_T5_006', 'LV04', 'V5006', GETDATE(), 300000.0, 'KH036', '18102', 'LTSE19-' + @todayStr + '01', 'T181', 1, N'Ngô Thị Mai', '079123456754');
-
--- SG-PT
-INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
-('VE_T5_007', 'LV03', 'V5007', GETDATE(), 150000.0, 'KH046', '24101', 'LTSPT25-' + @todayStr + '01', 'T241', 1, N'Lý Văn Bé', '079123456744'),
-('VE_T5_008', 'LV03', 'V5008', GETDATE(), 150000.0, 'KH046', '24102', 'LTSPT25-' + @todayStr + '01', 'T241', 1, N'Lý Văn Bé', '079123456744');
-
--- VÉ ĐÃ TRẢ (Test Tỷ lệ vé)
-INSERT INTO Ve (maVe, maLoaiVe, maVach, thoiGianLenTau, giaVe, maKH, maChoNgoi, maLichTrinh, maToa, trangThai, tenKhachHang, soCCCD) VALUES 
-('VE_T5_009', 'LV01', 'V5009', GETDATE(), 500000.0, 'KH005', '00107', 'LTSE1-' + @todayStr + '01', 'T001', 0, N'Vũ Thị Em', '079123456785'),
-('VE_T5_010', 'LV01', 'V5010', GETDATE(), 500000.0, 'KH005', '00108', 'LTSE1-' + @todayStr + '01', 'T001', 0, N'Vũ Thị Em', '079123456785');
-
--- 3. Chi tiết Hóa đơn
-INSERT INTO ChiTietHoaDon (maHoaDon, maVe, soLuong, giaVe, mucGiam) VALUES 
-('HD_T5_001', 'VE_T5_001', 1, 600000.0, 0),
-('HD_T5_001', 'VE_T5_002', 1, 600000.0, 0),
-('HD_T5_002', 'VE_T5_003', 1, 400000.0, 40000.0),
-('HD_T5_002', 'VE_T5_004', 1, 400000.0, 40000.0),
-('HD_T5_003', 'VE_T5_005', 1, 300000.0, 45000.0),
-('HD_T5_003', 'VE_T5_006', 1, 300000.0, 45000.0),
-('HD_T5_004', 'VE_T5_007', 1, 150000.0, 37500.0),
-('HD_T5_004', 'VE_T5_008', 1, 150000.0, 37500.0),
-('HD_T5_005', 'VE_T5_009', 1, 500000.0, 0),
-('HD_T5_005', 'VE_T5_010', 1, 500000.0, 0);
-
-PRINT N'✅ Đã thêm 7 HoaDon, 12 Ve (10 đã bán, 2 đã trả) cho T4 & T5';
-
--- ========================================
--- HOÀN THÀNH
--- ========================================
-PRINT N'';
-PRINT N'🎉🎉🎉 HOÀN THÀNH! 🎉🎉🎉';
-PRINT N'';
-PRINT N'✅ Database: HTQLVT';
-PRINT N'✅ Trains: 30 tàu (format PREFIXNN)';
-PRINT N'✅ Coaches: 300 toa (format Txx: T001-T300)';
-PRINT N'✅ Seats: 15,000+ chỗ (format XXYY: 0101, 0102,...)';
-PRINT N'✅ Routes: 5 tuyến (format AA-BB)';
-PRINT N'✅ Schedules: 900 lịch trình (format LTxxx-ddMMyyxx) - 30 NGÀY';
-PRINT N'✅ Employees: 15 nhân viên (format NVaabbxxxx)';
-PRINT N'✅ Accounts: 15 tài khoản';
-PRINT N'✅ Customers: 50 khách hàng';
-PRINT N'✅ Promotions: 7 khuyến mãi (format KMddMMyyyyxx)';
-PRINT N'✅ Data: 30 NGÀY TỪ HÔM NAY (' + CONVERT(NVARCHAR(10), GETDATE(), 103) + ')';
-PRINT N'';
-PRINT N'📌 ĐÚNG FORMAT THEO TÀI LIỆU:';
-PRINT N'  ✓ maNhanVien: NVaabbxxxx (VD: NV24900001)';
-PRINT N'  ✓ maToa: Txx (VD: T001, T002)';
-PRINT N'  ✓ maChoNgoi: XXYY (VD: 0101 = toa 01, ghế 01)';
-PRINT N'  ✓ maLichTrinh: LTxxx-ddMMyyxx (VD: LTSE1-18122501)';
-PRINT N'  ✓ maKhuyenMai: KMddMMyyyyxx (VD: KM0101202401)';
-PRINT N'  ✓ maLoaiVe: LVxx (VD: LV01, LV02)';
-PRINT N'  ✓ soHieuTau: PREFIXNN (VD: SE1, TN2)';
-PRINT N'  ✓ maTuyen: AA-BB (VD: HN-SG)';
-PRINT N'';
-PRINT N'📌 Login: admin / 123456';
-PRINT N'📌 Mỗi tuyến: 3 chuyến ĐI (lẻ) + 3 chuyến VỀ (chẵn)';
-PRINT N'📌 Mỗi tàu: 500 chỗ (320 ngồi + 180 nằm)';
-PRINT N'';
-PRINT N'📋 KHUYẾN MÃI:';
-PRINT N'  - Đối tượng: Trẻ em 25%, Người cao tuổi 15%, Sinh viên 10%';
-PRINT N'  - Hóa đơn: 11-40 vé (9%), 42-70 vé (11%), 71-100 vé (13%), ≥100 vé (15%)';
-PRINT N'';
-PRINT N'📊 KIỂM TRA DỮ LIỆU:';
-SELECT 
-    'LoaiTau' AS [Bảng], COUNT(*) AS [Số dòng] FROM LoaiTau UNION ALL
-SELECT 'LoaiToa', COUNT(*) FROM LoaiToa UNION ALL
-SELECT 'LoaiVe', COUNT(*) FROM LoaiVe UNION ALL
-SELECT 'Ga', COUNT(*) FROM Ga UNION ALL
-SELECT 'Tuyen', COUNT(*) FROM Tuyen UNION ALL
-SELECT 'ChuyenTau', COUNT(*) FROM ChuyenTau UNION ALL
-SELECT 'Toa', COUNT(*) FROM Toa UNION ALL
-SELECT 'ChoNgoi', COUNT(*) FROM ChoNgoi UNION ALL
-SELECT 'LichTrinh', COUNT(*) FROM LichTrinh UNION ALL
-SELECT 'NhanVien', COUNT(*) FROM NhanVien UNION ALL
-SELECT 'TaiKhoan', COUNT(*) FROM TaiKhoan UNION ALL
-SELECT 'KhachHang', COUNT(*) FROM KhachHang UNION ALL
-SELECT 'KhuyenMai', COUNT(*) FROM KhuyenMai UNION ALL
-SELECT 'ChiTietKhuyenMai', COUNT(*) FROM ChiTietKhuyenMai;
-
--- Hiển thị mẫu dữ liệu
-PRINT N'';
-PRINT N'📋 MẪU DỮ LIỆU:';
-SELECT TOP 5 maToa AS [Mã Toa (Txx)] FROM Toa ORDER BY maToa;
-SELECT TOP 5 maChoNgoi AS [Mã Chỗ Ngồi (XXYY)] FROM ChoNgoi ORDER BY maChoNgoi;
-SELECT TOP 5 maLichTrinh AS [Mã Lịch Trình (LTxxx-ddMMyyxx)] FROM LichTrinh ORDER BY maLichTrinh;
-SELECT maNhanVien AS [Mã Nhân Viên (NVaabbxxxx)], hoTen FROM NhanVien;
-SELECT maKhuyenMai AS [Mã Khuyến Mãi (KMddMMyyyyxx)], tenKhuyenMai FROM KhuyenMai;
-
--- Hiển thị chi tiết khuyến mãi
-PRINT N'';
-PRINT N'🎁 CHI TIẾT KHUYẾN MÃI:';
-SELECT 
-    km.maKhuyenMai,
-    km.tenKhuyenMai,
-    km.loaiKhuyenMai,
-    ctkm.dieuKien,
-    ctkm.chietKhau,
-    CAST(ctkm.chietKhau * 100 AS INT) AS [% Giảm]
-FROM KhuyenMai km
-LEFT JOIN ChiTietKhuyenMai ctkm ON km.maKhuyenMai = ctkm.maKhuyenMai
-ORDER BY km.loaiKhuyenMai, ctkm.chietKhau;
+PRINT N'✅ Đã nạp xong dữ liệu test đa dạng (Bắc - Nam & Ga trung gian)!';
 GO

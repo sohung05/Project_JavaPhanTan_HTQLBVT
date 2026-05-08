@@ -66,20 +66,19 @@ public class Gui_Dashboard extends JPanel {
         panelStats.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panelStats.setBackground(Color.WHITE);
 
-        lblDoanhThu = createStatCard("Tổng doanh thu", "0",
-                new Color(230, 244, 234), new Color(46, 125, 50));
-        lblSoVe = createStatCard("Vé đã bán", "0",
-                new Color(227, 242, 253), new Color(21, 101, 192));
-        lblKhuyenMai = createStatCard("Khuyến mãi sắp hết hạn", "0",
-                new Color(227, 252, 242), new Color(81, 197, 192));
-        lblKhachHang = createStatCard("Khách hàng", "0",
-                new Color(255, 248, 225), new Color(245, 124, 0));
+        lblDoanhThu = new JLabel("0");
+        lblSoVe = new JLabel("0");
+        lblKhuyenMai = new JLabel("0");
+        lblKhachHang = new JLabel("0");
 
-
-        panelStats.add(lblDoanhThu.getParent());
-        panelStats.add(lblSoVe.getParent());
-        panelStats.add(lblKhuyenMai.getParent());
-        panelStats.add(lblKhachHang.getParent());
+        panelStats.add(createStatCard("Doanh thu tháng này", lblDoanhThu,
+                new Color(230, 244, 234), new Color(46, 125, 50)));
+        panelStats.add(createStatCard("Trạng thái Vận hành", lblSoVe,
+                new Color(227, 242, 253), new Color(21, 101, 192)));
+        panelStats.add(createStatCard("Khuyến mãi sắp hết hạn", lblKhuyenMai,
+                new Color(227, 252, 242), new Color(81, 197, 192)));
+        panelStats.add(createStatCard("Khách hàng mới hôm nay", lblKhachHang,
+                new Color(255, 248, 225), new Color(245, 124, 0)));
 
         panelChart = new JPanel(new BorderLayout(20, 0));
         panelChart.setPreferredSize(new Dimension(900, 350));
@@ -96,12 +95,37 @@ public class Gui_Dashboard extends JPanel {
     // ================= LOAD DATA =================
     private void loadData() {
         try {
-            Map<String, Double> thongKe = dashboardService.getThongKeTongQuan();
+            LocalDate today = LocalDate.now();
+            Map<String, Double> thongKeThang = dashboardService.getThongKeTongQuan();
+            Map<String, Double> thongKeNgay = dashboardService.getThongKeNgay(today);
             int soKmSapHetHan = dashboardService.getSoKhuyenMaiSapHetHan(7);
+            int soTauDangChay = dashboardService.getSoTauDangChay();
+            String tenTauDangChay = dashboardService.getTenTauDangChay();
 
             DecimalFormat df = new DecimalFormat("#,### ₫");
-            lblDoanhThu.setText(df.format(thongKe.getOrDefault("doanhThu", 0.0)));
-            lblSoVe.setText(String.format("%.0f vé", thongKe.getOrDefault("soVeBan", 0.0)));
+            // 2 thẻ đầu dùng dữ liệu tháng / Live status
+            lblDoanhThu.setText(df.format(thongKeThang.getOrDefault("tongDoanhThu", 0.0)));
+            lblSoVe.setText(String.format("%d đoàn tàu", soTauDangChay));
+            
+            // Set trạng thái "Đang chạy" cho thẻ Live Status kèm tên tàu
+            JLabel deltaLive = (JLabel) lblSoVe.getClientProperty("deltaLabel");
+            deltaLive.setText("● Đang chạy: " + tenTauDangChay);
+            deltaLive.setToolTipText(tenTauDangChay);
+            deltaLive.setForeground(new Color(21, 101, 192));
+            
+            // Hiển thị % tăng trưởng cho Doanh thu
+            double phanTramDT = thongKeThang.getOrDefault("doanhThu", 0.0);
+            JLabel deltaDT = (JLabel) lblDoanhThu.getClientProperty("deltaLabel");
+            if (phanTramDT >= 0) {
+                deltaDT.setText(String.format("▲ %.1f%%", phanTramDT));
+                deltaDT.setForeground(new Color(46, 125, 50)); // Green
+            } else {
+                deltaDT.setText(String.format("▼ %.1f%%", Math.abs(phanTramDT)));
+                deltaDT.setForeground(new Color(198, 40, 40)); // Red
+            }
+
+            // 2 thẻ sau dùng dữ liệu ngày/hệ thống
+            lblKhachHang.setText(String.format("%.0f khách mới", thongKeNgay.getOrDefault("ptKhachHang", 0.0)));
             lblKhuyenMai.setText(String.format("%d khuyến mãi", soKmSapHetHan));
 
             loadChart();
@@ -200,81 +224,9 @@ public class Gui_Dashboard extends JPanel {
 
         comboChartPanel.setDisplayToolTips(true);
 
-// ================= DANH SÁCH TUYẾN ================
-
-        java.util.List<String> danhSachTuyen = Arrays.asList(
-                "DN-HN",
-                "HN-DN",
-                "HN-HUE",
-                "HN-SG",
-                "HUE-HN",
-                "NT-SG",
-                "PT-SG",
-                "SG-HN",
-                "SG-NT",
-                "SG-PT"
-        );
-
-// ================= LẤY DỮ LIỆU =================
-        Map<String, Double> doanhThuTheoTuyen =
-                dashboardService.getDoanhThuTheoTuyenTrongThang(today.getMonthValue(), today.getYear());
-
-// ================= DATASET =================
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        for (Map.Entry<String, Double> entry : doanhThuTheoTuyen.entrySet()) {
-            dataset.addValue(entry.getValue(), "Doanh thu", entry.getKey());
-        }
-// ================= BAR CHART (NẰM NGANG) =================
-        JFreeChart chart = ChartFactory.createBarChart(
-                "Doanh thu theo tuyến trong tháng",
-                "Tuyến",
-                "Số tiền (VND)",
-                dataset,
-                PlotOrientation.HORIZONTAL,
-                true,
-                true,
-                false
-        );
-
-// ================= PLOT =================
-        CategoryPlot bplot = chart.getCategoryPlot();
-        bplot.setBackgroundPaint(Color.WHITE);
-        bplot.setRangeGridlinePaint(Color.GRAY);
-
-// ================= TRỤC X (TIỀN) =================
-        NumberAxis xAxis = (NumberAxis) bplot.getRangeAxis();
-        xAxis.setAutoRangeIncludesZero(true);
-        xAxis.setNumberFormatOverride(
-                NumberFormat.getCurrencyInstance(new Locale("vi", "VN"))
-        );
-
-// ================= TRỤC Y (TUYẾN) =================
-        CategoryAxis yAxis = bplot.getDomainAxis();
-        yAxis.setLabel(null); // Ẩn chữ "Tuyến" bên trái
-
-// ================= LEGEND + TUYẾN DƯỚI =================
-        LegendTitle legend = chart.getLegend();
-        chart.removeLegend();                 // Gỡ legend mặc định
-        legend.setPosition(RectangleEdge.BOTTOM);
-        chart.addSubtitle(legend);            // Thêm legend xuống dưới
-
-        TextTitle tuyenTitle = new TextTitle("Tuyến");
-        tuyenTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
-        tuyenTitle.setPosition(RectangleEdge.BOTTOM);
-        chart.addSubtitle(tuyenTitle);        // "Tuyến" dưới cùng
-
-// ================= RENDERER =================
-        BarRenderer renderer = (BarRenderer) bplot.getRenderer();
-        renderer.setSeriesPaint(0, new Color(90, 120, 159));
-        renderer.setMaximumBarWidth(0.15);
-        renderer.setDefaultItemLabelGenerator(
-                new StandardCategoryItemLabelGenerator(
-                        "{2}",
-                        NumberFormat.getCurrencyInstance(new Locale("vi", "VN"))
-                )
-        );
-        renderer.setDefaultItemLabelsVisible(true);
+// ================= CẢNH BÁO LẤP ĐẦY ================
+        JPanel occupancyPanel = createOccupancyAlertPanel();
+        occupancyPanel.setPreferredSize(new Dimension(900, 300));
 
         // Pie chart
         Map<String, Double> tk = dashboardService.getThongKeTongQuan();
@@ -301,19 +253,13 @@ public class Gui_Dashboard extends JPanel {
         rightPanel.add(pieChartVePanel, BorderLayout.NORTH);
         rightPanel.add(pieChartTuyenPanel, BorderLayout.CENTER);
 
-// ================= CHART PANEL =================
-        ChartPanel tuyenChartPanel = new ChartPanel(chart);
-        tuyenChartPanel.setPreferredSize(new Dimension(900, 450));
-        tuyenChartPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 450));
-        tuyenChartPanel.setDisplayToolTips(true);
-
 // ================= GHÉP GIAO DIỆN =================
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setBackground(Color.WHITE);
         leftPanel.add(comboChartPanel);  // Combo chart doanh thu + số vé
-        leftPanel.add(Box.createVerticalStrut(12));
-        leftPanel.add(tuyenChartPanel);  // Biểu đồ tuyến ngang
+        leftPanel.add(Box.createVerticalStrut(15));
+        leftPanel.add(occupancyPanel);  // Bảng cảnh báo lấp đầy
 
         panelChart.removeAll();
         panelChart.setLayout(new BorderLayout(20, 0));
@@ -328,21 +274,54 @@ public class Gui_Dashboard extends JPanel {
     }
 
     // ================= CARD =================
-    private JLabel createStatCard(String title, String value, Color bg, Color fg) {
-        JPanel card = new JPanel(new BorderLayout());
+    private JPanel createStatCard(String title, JLabel v, Color bg, Color fg) {
+        RoundedPanel card = new RoundedPanel(20);
+        card.setLayout(new BorderLayout());
         card.setBackground(bg);
-        card.setPreferredSize(new Dimension(160, 80));
+        card.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        JLabel t = new JLabel(title, SwingConstants.CENTER);
+        JLabel t = new JLabel(title, SwingConstants.LEFT);
         t.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        t.setForeground(fg);
+        t.setForeground(new Color(80, 80, 80));
 
-        JLabel v = new JLabel(value, SwingConstants.CENTER);
-        v.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
+        centerPanel.setOpaque(false);
+
+        v.setFont(new Font("Segoe UI", Font.BOLD, 24));
         v.setForeground(fg);
+        
+        JLabel deltaLabel = new JLabel("");
+        deltaLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        deltaLabel.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 0));
+        v.putClientProperty("deltaLabel", deltaLabel);
+
+        centerPanel.add(v);
+        centerPanel.add(deltaLabel);
+
         card.add(t, BorderLayout.NORTH);
-        card.add(v, BorderLayout.CENTER);
-        return v;
+        card.add(centerPanel, BorderLayout.CENTER);
+        return card;
+    }
+
+    // Lớp hỗ trợ vẽ panel bo tròn góc
+    private static class RoundedPanel extends JPanel {
+        private int cornerRadius;
+
+        public RoundedPanel(int radius) {
+            super();
+            this.cornerRadius = radius;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(getBackground());
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
+            g2.dispose();
+        }
     }
 
     /**
@@ -462,7 +441,7 @@ public class Gui_Dashboard extends JPanel {
         dataset.setValue("Vé đã bán", ban);
         dataset.setValue("Vé đã trả", tra);
 
-        JFreeChart chart = ChartFactory.createPieChart("Tỷ lệ vé", dataset, true, true, false);
+        JFreeChart chart = ChartFactory.createPieChart("Tỷ lệ vé bán trong tháng", dataset, true, true, false);
         PiePlot plot = (PiePlot) chart.getPlot();
         plot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}: {2}"));
         plot.setBackgroundPaint(Color.WHITE);
@@ -513,7 +492,7 @@ public class Gui_Dashboard extends JPanel {
         }
         
         JFreeChart chart = ChartFactory.createPieChart(
-                "Tỷ lệ vé đặt theo tuyến", 
+                "Tỷ lệ vé đặt theo tuyến trong tháng",
                 dataset, 
                 true,  // legend
                 true,  // tooltips
@@ -537,25 +516,9 @@ public class Gui_Dashboard extends JPanel {
     }
 
     private void loadTableSoChoTrong(int day, int month) {
-        DefaultTableModel model = (DefaultTableModel) tuyenTable.getModel();
-        model.setRowCount(0);
-
-        try {
-            Map<String, Integer> data =
-                    dashboardService.getSoChoNgoiConTrongTheoTuyen(day, month);
-
-            for (Map.Entry<String, Integer> entry : data.entrySet()) {
-                model.addRow(new Object[]{
-                        entry.getKey(),
-                        entry.getValue()
-                });
-            }
-        } catch (Exception e) { e.printStackTrace(); }
+        // Method preserved for compatibility if called elsewhere, but logic simplified
     }
-    
-    /**
-     * Refresh toàn bộ dữ liệu Dashboard (gọi sau khi trả vé)
-     */
+
     public void refreshData() {
         System.out.println("🔄 Refreshing Dashboard data...");
         
@@ -585,4 +548,58 @@ public class Gui_Dashboard extends JPanel {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
+    private JPanel createOccupancyAlertPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(230, 230, 230)),
+            "CÁC CHUYẾN TÀU CÒN NHIỀU GHẾ TRỐNG HÔM NAY",
+            0, 0, new Font("Segoe UI", Font.BOLD, 14), new Color(198, 40, 40)
+        ));
+
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        try {
+            java.util.List<Object[]> data = dashboardService.getTopChuyenTauGheTrong(LocalDate.now(), 5);
+            // Đảo ngược danh sách để chuyến trống nhất nằm trên cùng trong biểu đồ ngang
+            Collections.reverse(data);
+            
+            for (Object[] row : data) {
+                String label = row[0] + " (" + row[1] + ")";
+                dataset.addValue(((Number) row[3]).doubleValue(), "Đã bán", label);
+                dataset.addValue(((Number) row[4]).doubleValue(), "Còn trống", label);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+
+        JFreeChart chart = ChartFactory.createStackedBarChart(
+            null,                   // chart title
+            null,                   // domain axis label
+            "Số lượng ghế",          // range axis label
+            dataset,                // data
+            PlotOrientation.HORIZONTAL, // orientation
+            true,                   // include legend
+            true,                   // tooltips
+            false                   // urls
+        );
+
+        // Tùy chỉnh thẩm mỹ cho biểu đồ
+        chart.setBackgroundPaint(Color.WHITE);
+        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setRangeGridlinePaint(new Color(230, 230, 230));
+        
+        // Màu sắc
+        plot.getRenderer().setSeriesPaint(0, new Color(41, 128, 185)); // Blue - Đã bán
+        plot.getRenderer().setSeriesPaint(1, new Color(236, 240, 241)); // Light Grey - Trống
+
+        // Font chữ
+        plot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
+        plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 11));
+
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setBackground(Color.WHITE);
+        panel.add(chartPanel, BorderLayout.CENTER);
+
+        return panel;
+    }
 }

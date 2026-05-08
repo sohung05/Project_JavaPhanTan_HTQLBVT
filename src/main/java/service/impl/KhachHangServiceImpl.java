@@ -84,4 +84,25 @@ public class KhachHangServiceImpl extends UnicastRemoteObject implements IKhachH
 
         return query.getResultList();
     }
+    @Override
+    public List<KhachHang> getAllKhachHangAndHanhKhach() throws RemoteException {
+        // Lấy danh sách khách hàng chính thức từ bảng KhachHang
+        List<KhachHang> dsKH = em.createQuery("SELECT kh FROM KhachHang kh", KhachHang.class).getResultList();
+        
+        // Tìm các hành khách trong bảng Ve mà chưa có trong bảng KhachHang (dựa trên CCCD)
+        List<Object[]> dsHanhKhachLa = em.createQuery(
+            "SELECT DISTINCT v.tenKhachHang, v.soCCCD FROM Ve v " +
+            "WHERE v.soCCCD NOT IN (SELECT kh.CCCD FROM KhachHang kh) " +
+            "AND v.soCCCD IS NOT NULL", Object[].class).getResultList();
+        
+        for (Object[] row : dsHanhKhachLa) {
+            String ten = (String) row[0];
+            String cccd = (String) row[1];
+            // Tạo một đối tượng KhachHang tạm thời (Passenger) để hiển thị lên bảng
+            KhachHang khTam = new KhachHang("PASSENGER", cccd, ten, "", "", "Hành khách");
+            dsKH.add(khTam);
+        }
+        
+        return dsKH;
+    }
 }

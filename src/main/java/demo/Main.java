@@ -169,7 +169,14 @@ public class Main extends javax.swing.JFrame {
                         if (subMenuIndex == 0 || subMenuIndex == -1) {
                             System.out.println("      ✅ Mở Trợ Giúp");
                             try {
-                                java.awt.Desktop.getDesktop().browse(new java.net.URI("http://127.0.0.1:5500/html/trogiup.html"));
+                                // Mở file HTML trợ giúp cục bộ
+                                java.io.File file = new java.io.File("src/main/resources/TroGiup/index.html");
+                                if (file.exists()) {
+                                    java.awt.Desktop.getDesktop().browse(file.toURI());
+                                } else {
+                                    System.err.println("❌ Không tìm thấy file trợ giúp tại: " + file.getAbsolutePath());
+                                    javax.swing.JOptionPane.showMessageDialog(Main.this, "Không tìm thấy file trợ giúp!");
+                                }
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }

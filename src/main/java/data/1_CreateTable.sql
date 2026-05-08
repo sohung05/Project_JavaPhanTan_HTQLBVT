@@ -1,7 +1,7 @@
 -- ========================================
--- HỆ THỐNG QUẢN LÝ VÉ TÀU - TẠO BẢNG
+-- HỆ THỐNG QUẢN LÝ VÉ TÀU - TẠO BẢNG (UPGRADED)
 -- File: 01_CreateTables.sql
--- Mô tả: Tạo database và các bảng
+-- Mô tả: Cấu trúc database hỗ trợ quản lý chặng (Segments)
 -- ========================================
 
 USE master;
@@ -49,6 +49,17 @@ CREATE TABLE Ga(
   viTri  NVARCHAR(200) NULL
 );
 
+-- 🆕 Bảng lộ trình chi tiết (Thứ tự các ga trong tuyến)
+CREATE TABLE BangGioGa (
+    maTuyen NVARCHAR(20) NOT NULL,
+    maGa NVARCHAR(20) NOT NULL,
+    stt INT NOT NULL, -- Số thứ tự ga trong tuyến (1, 2, 3...)
+    khoangCachTuGaTruoc DECIMAL(18,2) DEFAULT 0,
+    PRIMARY KEY (maTuyen, maGa),
+    FOREIGN KEY (maTuyen) REFERENCES Tuyen(maTuyen),
+    FOREIGN KEY (maGa) REFERENCES Ga(maGa)
+);
+
 /* ============================================
    🚆 TÀU / TOA / CHỖ NGỒI
 ============================================ */
@@ -79,14 +90,14 @@ CREATE TABLE ChoNgoi(
 );
 
 /* ============================================
-   🕒 LỊCH TRÌNH
+   🕒 LỊCH TRÌNH (Chuyến chạy thực tế)
 ============================================ */
 CREATE TABLE LichTrinh(
   maLichTrinh  NVARCHAR(20) PRIMARY KEY,
   soHieuTau    NVARCHAR(20) NOT NULL,
   maTuyen      NVARCHAR(20) NOT NULL,
-  maGaDi       NVARCHAR(20) NOT NULL,
-  maGaDen      NVARCHAR(20) NOT NULL,
+  maGaDi       NVARCHAR(20) NOT NULL, -- Ga xuất phát của cả chuyến
+  maGaDen      NVARCHAR(20) NOT NULL, -- Ga kết thúc của cả chuyến
   gioKhoiHanh  DATETIME2(0) NOT NULL,
   gioDenDuKien DATETIME2(0) NULL,
   trangThai    BIT NOT NULL DEFAULT 1,
@@ -97,7 +108,7 @@ CREATE TABLE LichTrinh(
 );
 
 /* ============================================
-   👩‍💼 NHÂN VIÊN / TÀI KHOẢN / KHÁCH HÀNG
+   👩💼 NHÂN VIÊN / TÀI KHOẢN / KHÁCH HÀNG
 ============================================ */
 CREATE TABLE NhanVien(
   maNhanVien NVARCHAR(20) PRIMARY KEY,
@@ -166,11 +177,16 @@ CREATE TABLE Ve(
   trangThai BIT NOT NULL DEFAULT 1,
   tenKhachHang NVARCHAR(150) NULL,
   soCCCD NVARCHAR(20) NULL,
+  -- 🆕 Cột mới hỗ trợ quản lý chặng
+  maGaDi NVARCHAR(20) NULL,
+  maGaDen NVARCHAR(20) NULL,
   FOREIGN KEY (maLoaiVe)   REFERENCES LoaiVe(maLoaiVe),
   FOREIGN KEY (maKH)       REFERENCES KhachHang(maKH),
   FOREIGN KEY (maChoNgoi)  REFERENCES ChoNgoi(maChoNgoi),
   FOREIGN KEY (maLichTrinh) REFERENCES LichTrinh(maLichTrinh),
-  FOREIGN KEY (maToa)      REFERENCES Toa(maToa)
+  FOREIGN KEY (maToa)      REFERENCES Toa(maToa),
+  FOREIGN KEY (maGaDi)     REFERENCES Ga(maGa),
+  FOREIGN KEY (maGaDen)    REFERENCES Ga(maGa)
 );
 
 /* ============================================
@@ -190,11 +206,25 @@ CREATE TABLE ChiTietHoaDon(
 CREATE TABLE ChiTietKhuyenMai(
   maChiTiet   INT IDENTITY(1,1) PRIMARY KEY,
   maKhuyenMai NVARCHAR(20) NOT NULL,
-  maHoaDon    NVARCHAR(20) NULL,  -- NULL để hỗ trợ khuyến mãi đối tượng
+  maHoaDon    NVARCHAR(20) NULL,
   dieuKien    NVARCHAR(200) NULL,
   chietKhau   DECIMAL(18,2) NOT NULL DEFAULT 0,
   FOREIGN KEY (maHoaDon)    REFERENCES HoaDon(maHoaDon) ON DELETE CASCADE,
   FOREIGN KEY (maKhuyenMai) REFERENCES KhuyenMai(maKhuyenMai)
+);
+
+/* ============================================
+   🖨️ LỊCH SỬ IN VÉ (AUDIT LOG)
+============================================ */
+CREATE TABLE LichSuInVe(
+  maLichSu    INT IDENTITY(1,1) PRIMARY KEY,
+  maVe        NVARCHAR(30) NOT NULL,
+  maNhanVien  NVARCHAR(20) NOT NULL,
+  thoiGianIn  DATETIME2(0) NOT NULL DEFAULT GETDATE(),
+  loaiIn      NVARCHAR(50) NULL, -- 'In mới', 'In lại'
+  ghiChu      NVARCHAR(250) NULL,
+  FOREIGN KEY (maVe)       REFERENCES Ve(maVe),
+  FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien)
 );
 
 /* ============================================
@@ -230,9 +260,14 @@ CREATE TABLE ThongTinVeTam(
   thanhTien     DECIMAL(18,2) DEFAULT 0,
   maChoNgoi     NVARCHAR(30) NULL,
   maLichTrinh   NVARCHAR(20) NULL,
+  -- 🆕 Cột mới hỗ trợ quản lý chặng
+  maGaDi NVARCHAR(20) NULL,
+  maGaDen NVARCHAR(20) NULL,
   FOREIGN KEY (maDonTreo)   REFERENCES DonTreoDat(maDonTreo) ON DELETE CASCADE,
   FOREIGN KEY (maChoNgoi)   REFERENCES ChoNgoi(maChoNgoi),
-  FOREIGN KEY (maLichTrinh) REFERENCES LichTrinh(maLichTrinh)
+  FOREIGN KEY (maLichTrinh) REFERENCES LichTrinh(maLichTrinh),
+  FOREIGN KEY (maGaDi)     REFERENCES Ga(maGa),
+  FOREIGN KEY (maGaDen)    REFERENCES Ga(maGa)
 );
 
 /* ============================================
@@ -244,16 +279,9 @@ CREATE INDEX IX_LT_TuyenTau    ON LichTrinh(maTuyen, soHieuTau);
 CREATE INDEX IX_LT_GaDi        ON LichTrinh(maGaDi);
 CREATE INDEX IX_LT_GaDen       ON LichTrinh(maGaDen);
 CREATE INDEX IX_Ve_LichTrinh   ON Ve(maLichTrinh);
-CREATE INDEX IX_Ve_KhachHang   ON Ve(maKH);
-CREATE INDEX IX_CTHD_Ve        ON ChiTietHoaDon(maVe);
-CREATE INDEX IX_CTKM_KM        ON ChiTietKhuyenMai(maKhuyenMai);
+CREATE INDEX IX_Ve_Segments    ON Ve(maLichTrinh, maGaDi, maGaDen);
+CREATE INDEX IX_BGG_Tuyen      ON BangGioGa(maTuyen, stt);
 GO
 
-PRINT N'✅ Đã tạo database HTQLVT và tất cả các bảng thành công!';
-PRINT N'';
-PRINT N'📊 Cấu trúc database:';
-PRINT N'   - 15 bảng dữ liệu chính';
-PRINT N'   - 9 index tối ưu truy vấn';
-PRINT N'';
-PRINT N'📌 Tiếp theo: Chạy file 02_ResetAndInsertData.sql để thêm dữ liệu';
+PRINT N'✅ Đã nâng cấp database HTQLVT thành công!';
 GO

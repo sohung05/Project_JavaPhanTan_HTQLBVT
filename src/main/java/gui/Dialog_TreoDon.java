@@ -121,7 +121,24 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
                 // Cập nhật thời gian còn lại (index 7)
                 modelTable.setValueAt(don.getThoiGianConLaiFormatted(), i, 7);
             } else {
-                // Đơn đã hết hạn hoặc bị xóa → Đánh dấu để xóa khỏi bảng
+                // ⚡ GIẢI PHÓNG TRÊN DATA: Đơn đã hết hạn hoặc bị xóa trên Server
+                // Lấy danh sách mã ghế để giải phóng RAM Remote
+                List<String> maGheList = new java.util.ArrayList<>();
+                if (don != null && don.getDanhSachVe() != null) {
+                    for (DonTreoDat.ThongTinVeTam ve : don.getDanhSachVe()) {
+                        if (ve.getChoNgoi() != null) {
+                            maGheList.add(ve.getChoNgoi().getMaChoNgoi());
+                        }
+                    }
+                }
+                
+                // Gọi xoaDonTreo trên server (Xử lý trên Data)
+                QuanLyDonTreo.xoaDonTreo(maDon);
+                
+                // Giải phóng triệt để trên RAM (Xử lý hiển thị)
+                QuanLyGheGiuCho.xoaTatCaGheCuaDonTreo(maDon, maGheList);
+                
+                // Đánh dấu để xóa khỏi bảng
                 rowsToRemove.add(i);
             }
         }
@@ -466,19 +483,37 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
             JOptionPane.QUESTION_MESSAGE);
         
         if (confirm == JOptionPane.YES_OPTION) {
-            // Xóa ghế giữ chỗ
-            QuanLyGheGiuCho.xoaTatCaGheCuaDonTreo(maDonChon);
+            // ⚡ LẤY THÔNG TIN GHẾ TỪ DATA TRƯỚC:
+            DonTreoDat don = QuanLyDonTreo.layDonTreo(maDonChon);
+            List<String> maGheList = new java.util.ArrayList<>();
+            if (don != null && don.getDanhSachVe() != null) {
+                for (DonTreoDat.ThongTinVeTam ve : don.getDanhSachVe()) {
+                    if (ve.getChoNgoi() != null) {
+                        maGheList.add(ve.getChoNgoi().getMaChoNgoi());
+                    }
+                }
+            }
             
-            // Xóa đơn treo
-            QuanLyDonTreo.xoaDonTreo(maDonChon);
+            // Gọi lệnh xóa đơn treo trên Server (Server sẽ xóa cứng trong Database)
+            boolean thanhCong = QuanLyDonTreo.xoaDonTreo(maDonChon);
             
-            // Reload table
-            loadTatCaDonTreo();
-            
-            JOptionPane.showMessageDialog(this,
-                "Đã hủy đơn thành công!",
-                "Thông báo",
-                JOptionPane.INFORMATION_MESSAGE);
+            if (thanhCong) {
+                // Giải phóng triệt để trên RAM (Cần danh sách mã ghế để xóa đúng mục)
+                QuanLyGheGiuCho.xoaTatCaGheCuaDonTreo(maDonChon, maGheList);
+                
+                // Reload table trong dialog
+                loadTatCaDonTreo();
+                
+                JOptionPane.showMessageDialog(this,
+                    "Hủy đơn thành công!",
+                    "Thông báo",
+                    JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                    "Lỗi: Không thể hủy đơn trên hệ thống!",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }//GEN-LAST:event_btnHuyDonActionPerformed
 
