@@ -32,6 +32,10 @@ public class Header extends javax.swing.JPanel {
         cmdReload.addActionListener(event);
     }
 
+    public void setReloadEnabled(boolean enabled) {
+        cmdReload.setEnabled(enabled);
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {

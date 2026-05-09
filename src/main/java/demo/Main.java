@@ -135,6 +135,17 @@ public class Main extends javax.swing.JFrame {
                 showSelectedForm(currentMenuIndex, currentSubMenuIndex);
             }
         });
+        main.addPropertyChangeListener(evt -> {
+            if ("currentForm".equals(evt.getPropertyName())) {
+                Component newForm = (Component) evt.getNewValue();
+                if (newForm != null && newForm.getClass().getSimpleName().equals("Gui_NhapThongTinBanVe")) {
+                    header.setReloadEnabled(false);
+                } else {
+                    header.setReloadEnabled(true);
+                }
+            }
+        });
+
         //  Init google icon font
         IconFontSwing.register(GoogleMaterialDesignIcons.getIconFont());
         //  Start with this form

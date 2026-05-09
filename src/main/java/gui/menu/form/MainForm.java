@@ -14,10 +14,12 @@ public class MainForm extends javax.swing.JPanel {
     }
 
     public void showForm(Component form) {
+        Component oldForm = getCurrentForm();
         removeAll();
         add(form);
         repaint();
         revalidate();
+        firePropertyChange("currentForm", oldForm, form);
     }
 
     public Component getCurrentForm() {

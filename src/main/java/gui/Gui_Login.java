@@ -1,6 +1,5 @@
 package gui;
 
-import connectDB.connectDB;
 import entity.NhanVien;
 import entity.TaiKhoan;
 import service.ITaiKhoanService;
