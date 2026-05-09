@@ -13,4 +13,5 @@ public interface ITaiKhoanService extends Remote {
     boolean sua(TaiKhoan tk) throws RemoteException;
     List<Object[]> timKiem(String maNV, String tenTaiKhoan, String tenNhanVien) throws RemoteException;
     boolean kiemTraTonTaiTheoMaNV(String maNV) throws RemoteException;
+    boolean kiemTraTonTaiTheoTenTK(String tenTK) throws RemoteException;
 }

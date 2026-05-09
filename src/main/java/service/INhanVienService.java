@@ -14,4 +14,5 @@ public interface INhanVienService extends Remote {
     List<NhanVien> timKiem(String maNV, String cccd, String hoTen, String email, String sdt,
                           String trangThai, String gioiTinh, LocalDate ngaySinh) throws RemoteException;
     String generateMaNhanVien(LocalDate ngayVaoLam, LocalDate ngaySinh) throws RemoteException;
+    boolean existsByCCCD(String cccd) throws RemoteException;
 }

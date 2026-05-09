@@ -32,10 +32,13 @@ public class LichTrinhServiceImpl extends UnicastRemoteObject implements ILichTr
         try {
             String sql = "SELECT lt.* " +
                          "FROM LichTrinh lt " +
-                         "JOIN Ga gaDi ON gaDi.maGa = lt.maGaDi " +
-                         "JOIN Ga gaDen ON gaDen.maGa = lt.maGaDen " +
-                         "WHERE gaDi.tenGa LIKE ? " +
-                         "  AND gaDen.tenGa LIKE ? " +
+                         "JOIN BangGioGa bg1 ON lt.maTuyen = bg1.maTuyen " +
+                         "JOIN Ga g1 ON bg1.maGa = g1.maGa " +
+                         "JOIN BangGioGa bg2 ON lt.maTuyen = bg2.maTuyen " +
+                         "JOIN Ga g2 ON bg2.maGa = g2.maGa " +
+                         "WHERE g1.tenGa LIKE ? " +
+                         "  AND g2.tenGa LIKE ? " +
+                         "  AND bg1.stt < bg2.stt " +
                          "  AND CAST(lt.gioKhoiHanh AS DATE) = ? " +
                          "  AND lt.trangThai = 1 " +
                          "ORDER BY lt.gioKhoiHanh";

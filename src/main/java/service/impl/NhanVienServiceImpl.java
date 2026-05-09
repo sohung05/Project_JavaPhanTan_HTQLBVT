@@ -118,4 +118,17 @@ public class NhanVienServiceImpl extends UnicastRemoteObject implements INhanVie
             return null;
         }
     }
+
+    @Override
+    public boolean existsByCCCD(String cccd) throws RemoteException {
+        try {
+            Long count = em.createQuery("SELECT COUNT(nv) FROM NhanVien nv WHERE nv.CCCD = :cccd", Long.class)
+                    .setParameter("cccd", cccd)
+                    .getSingleResult();
+            return count > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

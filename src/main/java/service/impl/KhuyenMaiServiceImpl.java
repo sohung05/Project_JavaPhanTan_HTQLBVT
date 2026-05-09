@@ -22,13 +22,20 @@ public class KhuyenMaiServiceImpl extends UnicastRemoteObject implements IKhuyen
 
     @Override
     public List<KhuyenMai> getTatCaKhuyenMaiHoaDon() throws RemoteException {
+        System.out.println("--- Lấy danh sách KM Hóa đơn ---");
         List<Object[]> list = em.createQuery("SELECT km, ct.chietKhau, ct.dieuKien FROM KhuyenMai km JOIN ChiTietKhuyenMai ct ON ct.khuyenMai = km WHERE km.loaiKhuyenMai = 'KMHD'", Object[].class).getResultList();
         List<KhuyenMai> res = new java.util.ArrayList<>();
+        java.util.Set<String> seen = new java.util.HashSet<>();
         for (Object[] obj : list) {
             KhuyenMai km = (KhuyenMai) obj[0];
+            String ma = km.getMaKhuyenMai().trim();
+            if (seen.contains(ma)) continue;
+            
             km.setChietKhau(((Number) obj[1]).doubleValue());
             km.setDoiTuongApDung((String) obj[2]);
             res.add(km);
+            seen.add(ma);
+            System.out.println("✅ Thêm KM: " + ma + " - CK: " + km.getChietKhau());
         }
         return res;
     }
@@ -36,12 +43,17 @@ public class KhuyenMaiServiceImpl extends UnicastRemoteObject implements IKhuyen
     @Override
     public boolean themKhuyenMaiHoaDon(KhuyenMai km, String soVeStr, double chietKhau) throws RemoteException {
         km.setLoaiKhuyenMai("KMHD");
-        km.setDoiTuongApDung(soVeStr);
-        km.setChietKhau(chietKhau);
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
             em.persist(km);
+            
+            entity.ChiTietKhuyenMai ct = new entity.ChiTietKhuyenMai();
+            ct.setKhuyenMai(km);
+            ct.setChietKhau(chietKhau);
+            ct.setDieuKien(soVeStr);
+            em.persist(ct);
+            
             tx.commit();
             return true;
         } catch (Exception e) {
@@ -92,9 +104,17 @@ public class KhuyenMaiServiceImpl extends UnicastRemoteObject implements IKhuyen
                 km.setTenKhuyenMai(ten);
                 km.setThoiGianBatDau(new java.sql.Timestamp(start.getTime()).toLocalDateTime());
                 km.setThoiGianKetThuc(new java.sql.Timestamp(end.getTime()).toLocalDateTime());
-                km.setChietKhau(chietKhau);
-                km.setDoiTuongApDung(dieuKien);
                 em.merge(km);
+                
+                // Cập nhật ChiTietKhuyenMai
+                List<entity.ChiTietKhuyenMai> details = em.createQuery("SELECT ct FROM ChiTietKhuyenMai ct WHERE ct.khuyenMai.maKhuyenMai = :ma", entity.ChiTietKhuyenMai.class)
+                        .setParameter("ma", maKMCu)
+                        .getResultList();
+                for (entity.ChiTietKhuyenMai ct : details) {
+                    ct.setChietKhau(chietKhau);
+                    ct.setDieuKien(dieuKien);
+                    em.merge(ct);
+                }
             }
             tx.commit();
             return true;
@@ -117,13 +137,20 @@ public class KhuyenMaiServiceImpl extends UnicastRemoteObject implements IKhuyen
 
     @Override
     public List<KhuyenMai> getTatCaKhuyenMaiDoiTuong() throws RemoteException {
+        System.out.println("--- Lấy danh sách KM Đối tượng ---");
         List<Object[]> list = em.createQuery("SELECT km, ct.chietKhau, ct.dieuKien FROM KhuyenMai km JOIN ChiTietKhuyenMai ct ON ct.khuyenMai = km WHERE km.loaiKhuyenMai = 'KMKH'", Object[].class).getResultList();
         List<KhuyenMai> res = new java.util.ArrayList<>();
+        java.util.Set<String> seen = new java.util.HashSet<>();
         for (Object[] obj : list) {
             KhuyenMai km = (KhuyenMai) obj[0];
+            String ma = km.getMaKhuyenMai().trim();
+            if (seen.contains(ma)) continue;
+            
             km.setChietKhau(((Number) obj[1]).doubleValue());
             km.setDoiTuongApDung((String) obj[2]);
             res.add(km);
+            seen.add(ma);
+            System.out.println("✅ Thêm KM: " + ma + " - CK: " + km.getChietKhau());
         }
         return res;
     }
@@ -131,12 +158,17 @@ public class KhuyenMaiServiceImpl extends UnicastRemoteObject implements IKhuyen
     @Override
     public boolean themKhuyenMaiDoiTuong(KhuyenMai km, String doiTuong, double chietKhau) throws RemoteException {
         km.setLoaiKhuyenMai("KMKH");
-        km.setDoiTuongApDung(doiTuong);
-        km.setChietKhau(chietKhau);
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
             em.persist(km);
+            
+            entity.ChiTietKhuyenMai ct = new entity.ChiTietKhuyenMai();
+            ct.setKhuyenMai(km);
+            ct.setChietKhau(chietKhau);
+            ct.setDieuKien(doiTuong);
+            em.persist(ct);
+            
             tx.commit();
             return true;
         } catch (Exception e) {
@@ -156,9 +188,17 @@ public class KhuyenMaiServiceImpl extends UnicastRemoteObject implements IKhuyen
                 km.setTenKhuyenMai(ten);
                 km.setThoiGianBatDau(new java.sql.Timestamp(start.getTime()).toLocalDateTime());
                 km.setThoiGianKetThuc(new java.sql.Timestamp(end.getTime()).toLocalDateTime());
-                km.setChietKhau(chietKhau);
-                km.setDoiTuongApDung(doiTuong);
                 em.merge(km);
+
+                // Cập nhật ChiTietKhuyenMai
+                List<entity.ChiTietKhuyenMai> details = em.createQuery("SELECT ct FROM ChiTietKhuyenMai ct WHERE ct.khuyenMai.maKhuyenMai = :ma", entity.ChiTietKhuyenMai.class)
+                        .setParameter("ma", maKMCu)
+                        .getResultList();
+                for (entity.ChiTietKhuyenMai ct : details) {
+                    ct.setChietKhau(chietKhau);
+                    ct.setDieuKien(doiTuong);
+                    em.merge(ct);
+                }
             }
             tx.commit();
             return true;
