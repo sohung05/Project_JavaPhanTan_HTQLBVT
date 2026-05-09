@@ -104,13 +104,13 @@ public class VeServiceImpl extends UnicastRemoteObject implements IVeService {
 
     @Override
     public List<Ve> findByMaHoaDon(String maHoaDon) throws RemoteException {
-        // Lấy danh sách vé thông qua ChiTietHoaDon, sử dụng JOIN FETCH để nạp đầy đủ dữ liệu liên quan
+        // Sử dụng LEFT JOIN FETCH để đảm bảo nếu một số trường thông tin bị thiếu (NULL) thì vẫn trả về danh sách vé
         return em.createQuery(
                 "SELECT ct.ve FROM ChiTietHoaDon ct " +
-                "JOIN FETCH ct.ve.lichTrinh " +
-                "JOIN FETCH ct.ve.toa " +
-                "JOIN FETCH ct.ve.choNgoi " +
-                "JOIN FETCH ct.ve.loaiVe " +
+                "LEFT JOIN FETCH ct.ve.lichTrinh " +
+                "LEFT JOIN FETCH ct.ve.toa " +
+                "LEFT JOIN FETCH ct.ve.choNgoi " +
+                "LEFT JOIN FETCH ct.ve.loaiVe " +
                 "WHERE ct.hoaDon.maHoaDon = :maHD AND ct.ve.trangThai = true", Ve.class)
                 .setParameter("maHD", maHoaDon)
                 .getResultList();
