@@ -50,7 +50,7 @@ public class DonTreoDat implements Serializable {
 
     private String ngayDi;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "maLichTrinh")
     private LichTrinh lichTrinh;
 
@@ -100,7 +100,7 @@ public class DonTreoDat implements Serializable {
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne(fetch = FetchType.EAGER)
         @JoinColumn(name = "maDonTreo", nullable = false)
         private DonTreoDat donTreoDat; // Tham chiếu ngược lại đơn treo
 
@@ -120,19 +120,19 @@ public class DonTreoDat implements Serializable {
         private double giamGia;
         private double thanhTien;
 
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne(fetch = FetchType.EAGER)
         @JoinColumn(name = "maChoNgoi")
         private ChoNgoi choNgoi;
 
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne(fetch = FetchType.EAGER)
         @JoinColumn(name = "maLichTrinh")
         private LichTrinh lichTrinh;
 
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne(fetch = FetchType.EAGER)
         @JoinColumn(name = "maGaDi")
         private Ga gaDi;
 
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne(fetch = FetchType.EAGER)
         @JoinColumn(name = "maGaDen")
         private Ga gaDen;
     }

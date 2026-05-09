@@ -17,6 +17,7 @@ import service.IChoNgoiService;
 import service.IThongKeService;
 import service.IKhuyenMaiService;
 import service.IDonTreoService;
+import service.ILichSuInVeService;
 import service.impl.DashboardServiceImpl;
 import service.impl.HoaDonServiceImpl;
 import service.impl.KhachHangServiceImpl;
@@ -31,6 +32,7 @@ import service.impl.ChoNgoiServiceImpl;
 import service.impl.ThongKeServiceImpl;
 import service.impl.KhuyenMaiServiceImpl;
 import service.impl.DonTreoServiceImpl;
+import service.impl.LichSuInVeServiceImpl;
 
 import java.rmi.Naming;
 import java.rmi.registry.LocateRegistry;
@@ -60,6 +62,7 @@ public class Server {
             IThongKeService thongKeService = new ThongKeServiceImpl(em);
             IKhuyenMaiService khuyenMaiService = new KhuyenMaiServiceImpl(em);
             IDonTreoService donTreoService = new DonTreoServiceImpl();
+            ILichSuInVeService lichSuInVeService = new LichSuInVeServiceImpl(em);
 
             // 3. Tạo RMI Registry tại cổng 1099
             LocateRegistry.createRegistry(1099);
@@ -79,6 +82,7 @@ public class Server {
             Naming.rebind("rmi://172.20.10.5:1099/ThongKeService", thongKeService);
             Naming.rebind("rmi://172.20.10.5:1099/KhuyenMaiService", khuyenMaiService);
             Naming.rebind("rmi://172.20.10.5:1099/DonTreoService", donTreoService);
+            Naming.rebind("rmi://172.20.10.5:1099/LichSuInVeService", lichSuInVeService);
 
             System.out.println("-------------------------------------------");
             System.out.println("RMI Server is running on port 1099...");
@@ -97,6 +101,7 @@ public class Server {
             System.out.println("- ThongKeService");
             System.out.println("- KhuyenMaiService");
             System.out.println("- DonTreoService");
+            System.out.println("- LichSuInVeService");
             System.out.println("-------------------------------------------");
 
         } catch (Exception e) {

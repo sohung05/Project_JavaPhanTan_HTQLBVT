@@ -128,9 +128,9 @@ public class KhuyenMaiServiceImpl extends UnicastRemoteObject implements IKhuyen
     @Override
     public double getChietKhauHieuLucTheoSoVe(int soLuongVe) throws RemoteException {
         LocalDateTime now = LocalDateTime.now();
-        List<Double> results = em.createQuery("SELECT ct.chietKhau FROM ChiTietKhuyenMai ct WHERE ct.khuyenMai.loaiKhuyenMai = 'KMHD' AND ct.khuyenMai.trangThai = true AND :now BETWEEN ct.khuyenMai.thoiGianBatDau AND ct.khuyenMai.thoiGianKetThuc AND ct.khuyenMai.doiTuongApDung = :qty ORDER BY ct.chietKhau DESC", Double.class)
+        List<Double> results = em.createQuery("SELECT ct.chietKhau FROM ChiTietKhuyenMai ct WHERE ct.khuyenMai.loaiKhuyenMai = 'KMHD' AND ct.khuyenMai.trangThai = true AND :now BETWEEN ct.khuyenMai.thoiGianBatDau AND ct.khuyenMai.thoiGianKetThuc AND ct.dieuKien = :qty ORDER BY ct.chietKhau DESC", Double.class)
                 .setParameter("now", now)
-                .setParameter("qty", soLuongVe)
+                .setParameter("qty", String.valueOf(soLuongVe))
                 .getResultList();
         return results.isEmpty() ? 0 : results.get(0);
     }
@@ -212,7 +212,7 @@ public class KhuyenMaiServiceImpl extends UnicastRemoteObject implements IKhuyen
     @Override
     public double getChietKhauHieuLucTheoDoiTuong(String doiTuong) throws RemoteException {
         LocalDateTime now = LocalDateTime.now();
-        List<Double> results = em.createQuery("SELECT ct.chietKhau FROM ChiTietKhuyenMai ct WHERE ct.khuyenMai.loaiKhuyenMai = 'KMKH' AND ct.khuyenMai.trangThai = true AND :now BETWEEN ct.khuyenMai.thoiGianBatDau AND ct.khuyenMai.thoiGianKetThuc AND ct.khuyenMai.doiTuongApDung = :dt ORDER BY ct.chietKhau DESC", Double.class)
+        List<Double> results = em.createQuery("SELECT ct.chietKhau FROM ChiTietKhuyenMai ct WHERE ct.khuyenMai.loaiKhuyenMai = 'KMKH' AND ct.khuyenMai.trangThai = true AND :now BETWEEN ct.khuyenMai.thoiGianBatDau AND ct.khuyenMai.thoiGianKetThuc AND ct.dieuKien = :dt ORDER BY ct.chietKhau DESC", Double.class)
                 .setParameter("now", now)
                 .setParameter("dt", doiTuong)
                 .getResultList();
