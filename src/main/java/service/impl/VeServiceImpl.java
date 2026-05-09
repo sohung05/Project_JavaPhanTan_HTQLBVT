@@ -49,6 +49,27 @@ public class VeServiceImpl extends UnicastRemoteObject implements IVeService {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
+            
+            // ⚡ CLEANUP: Nếu vé bị hủy/hoàn (trạng thái = false), xóa mọi đơn treo liên quan đến ghế này
+            if (!ve.isTrangThai() && ve.getChoNgoi() != null) {
+                String maCho = ve.getChoNgoi().getMaChoNgoi();
+                // 1. Tìm các mã đơn treo chứa ghế này
+                List<String> listMaDon = em.createNativeQuery(
+                    "SELECT DISTINCT maDonTreo FROM ThongTinVeTam WHERE maChoNgoi = :maCho")
+                    .setParameter("maCho", maCho)
+                    .getResultList();
+                
+                for (String maDon : listMaDon) {
+                    em.createNativeQuery("DELETE FROM ThongTinVeTam WHERE maDonTreo = :maDon")
+                        .setParameter("maDon", maDon)
+                        .executeUpdate();
+                    em.createNativeQuery("DELETE FROM DonTreoDat WHERE maDonTreo = :maDon")
+                        .setParameter("maDon", maDon)
+                        .executeUpdate();
+                }
+                System.out.println("🧹 SERVER: Đã dọn dẹp đơn treo cho ghế vừa hoàn: " + maCho);
+            }
+            
             em.merge(ve);
             tx.commit();
             return true;

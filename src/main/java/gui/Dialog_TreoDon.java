@@ -493,11 +493,13 @@ public class Dialog_TreoDon extends javax.swing.JDialog {
                     }
                 }
             }
+            System.out.println("🔍 Chuẩn bị hủy đơn: " + maDonChon + " | Số ghế cần giải phóng: " + maGheList.size());
             
             // Gọi lệnh xóa đơn treo trên Server (Server sẽ xóa cứng trong Database)
             boolean thanhCong = QuanLyDonTreo.xoaDonTreo(maDonChon);
             
             if (thanhCong) {
+                System.out.println("✅ Hủy đơn " + maDonChon + " thành công. Giải phóng " + maGheList.size() + " ghế trên RAM.");
                 // Giải phóng triệt để trên RAM (Cần danh sách mã ghế để xóa đúng mục)
                 QuanLyGheGiuCho.xoaTatCaGheCuaDonTreo(maDonChon, maGheList);
                 

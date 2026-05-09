@@ -40,8 +40,8 @@ import java.rmi.registry.LocateRegistry;
 public class Server {
     public static void main(String[] args) {
         try {
-            // 0. Cấu hình IP cho RMI Server trong mạng LAN
-            System.setProperty("java.rmi.server.hostname", "192.168.1.18");
+            // 0. Cấu hình IP cho RMI Server (Dùng localhost để chạy trên máy hiện tại)
+            System.setProperty("java.rmi.server.hostname", "192.168.1.26");
 
             // 1. Khởi tạo EntityManager từ Persistence Unit
             EntityManagerFactory emf = Persistence.createEntityManagerFactory("mssql-pu");
@@ -68,21 +68,21 @@ public class Server {
             LocateRegistry.createRegistry(1099);
 
             // 4. Đăng ký các dịch vụ vào Registry
-            Naming.rebind("rmi://192.168.1.18:1099/KhachHangService", khachHangService);
-            Naming.rebind("rmi://192.168.1.18:1099/HoaDonService", hoaDonService);
-            Naming.rebind("rmi://192.168.1.18:1099/LichTrinhService", lichTrinhService);
-            Naming.rebind("rmi://192.168.1.18:1099/NhanVienService", nhanVienService);
-            Naming.rebind("rmi://192.168.1.18:1099/DashboardService", dashboardService);
-            Naming.rebind("rmi://192.168.1.18:1099/TaiKhoanService", taiKhoanService);
-            Naming.rebind("rmi://192.168.1.18:1099/GaService", gaService);
-            Naming.rebind("rmi://192.168.1.18:1099/VeService", veService);
-            Naming.rebind("rmi://192.168.1.18:1099/LoaiVeService", loaiVeService);
-            Naming.rebind("rmi://192.168.1.18:1099/ToaService", toaService);
-            Naming.rebind("rmi://192.168.1.18:1099/ChoNgoiService", choNgoiService);
-            Naming.rebind("rmi://192.168.1.18:1099/ThongKeService", thongKeService);
-            Naming.rebind("rmi://192.168.1.18:1099/KhuyenMaiService", khuyenMaiService);
-            Naming.rebind("rmi://192.168.1.18:1099/DonTreoService", donTreoService);
-            Naming.rebind("rmi://192.168.1.18:1099/LichSuInVeService", lichSuInVeService);
+            Naming.rebind("rmi://192.168.1.26:1099/KhachHangService", khachHangService);
+            Naming.rebind("rmi://192.168.1.26:1099/HoaDonService", hoaDonService);
+            Naming.rebind("rmi://192.168.1.26:1099/LichTrinhService", lichTrinhService);
+            Naming.rebind("rmi://192.168.1.26:1099/NhanVienService", nhanVienService);
+            Naming.rebind("rmi://192.168.1.26:1099/DashboardService", dashboardService);
+            Naming.rebind("rmi://192.168.1.26:1099/TaiKhoanService", taiKhoanService);
+            Naming.rebind("rmi://192.168.1.26:1099/GaService", gaService);
+            Naming.rebind("rmi://192.168.1.26:1099/VeService", veService);
+            Naming.rebind("rmi://192.168.1.26:1099/LoaiVeService", loaiVeService);
+            Naming.rebind("rmi://192.168.1.26:1099/ToaService", toaService);
+            Naming.rebind("rmi://192.168.1.26:1099/ChoNgoiService", choNgoiService);
+            Naming.rebind("rmi://192.168.1.26:1099/ThongKeService", thongKeService);
+            Naming.rebind("rmi://192.168.1.26:1099/KhuyenMaiService", khuyenMaiService);
+            Naming.rebind("rmi://192.168.1.26:1099/DonTreoService", donTreoService);
+            Naming.rebind("rmi://192.168.1.26:1099/LichSuInVeService", lichSuInVeService);
 
             System.out.println("-------------------------------------------");
             System.out.println("RMI Server is running on port 1099...");

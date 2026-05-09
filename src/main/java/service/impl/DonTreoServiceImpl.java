@@ -69,27 +69,24 @@ public class DonTreoServiceImpl extends UnicastRemoteObject implements IDonTreoS
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
+            System.out.println("🚀 SERVER: Đang thực hiện xóa cứng đơn treo: " + maDon);
             
-            // ⚡ XỬ LÝ TRỰC TIẾP DƯỚI DATABASE (Dùng Native SQL cho chắc chắn):
-            // 1. Xóa các vé tạm bằng lệnh SQL thuần (Bỏ qua rắc rối về Entity lồng nhau)
-            em.createNativeQuery("DELETE FROM ThongTinVeTam WHERE maDonTreo = ?")
-              .setParameter(1, maDon)
-              .executeUpdate();
+            // 1. Xóa các vé tạm trước
+            int v = em.createNativeQuery("DELETE FROM ThongTinVeTam WHERE maDonTreo = :maDon")
+                .setParameter("maDon", maDon)
+                .executeUpdate();
             
-            // 2. Tìm và xóa đơn treo chính
-            DonTreoDat don = em.find(DonTreoDat.class, maDon);
-            if (don != null) {
-                em.remove(don);
-            }
+            // 2. Xóa đơn treo
+            int d = em.createNativeQuery("DELETE FROM DonTreoDat WHERE maDonTreo = :maDon")
+                .setParameter("maDon", maDon)
+                .executeUpdate();
             
             tx.commit();
-            System.out.println("✅ SERVER: Đã xóa sạch DATA cho đơn: " + maDon);
-            return true;
+            System.out.println("✅ SERVER: Kết quả xóa đơn [" + maDon + "]: " + d + " đơn, " + v + " vé tạm.");
+            return d > 0;
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
-            // In lỗi ra console server để debug
-            System.err.println("❌ LỖI SERVER KHI XÓA ĐƠN: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("❌ SERVER LỖI KHI XÓA ĐƠN [" + maDon + "]: " + e.getMessage());
             return false;
         } finally {
             em.close();
@@ -123,28 +120,36 @@ public class DonTreoServiceImpl extends UnicastRemoteObject implements IDonTreoS
     }
 
     @Override
-    public void xoaDonHetHan() throws RemoteException {
+    public void xoaDonHetHan() {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
+            // ⚡ Dùng Native SQL để xóa sạch và nhanh
             LocalDateTime limit = LocalDateTime.now().minusMinutes(15);
-            List<DonTreoDat> hetHan = em.createQuery(
-                "SELECT d FROM DonTreoDat d WHERE d.ngayLap < :limit", DonTreoDat.class)
+            
+            // 1. Tìm các mã đơn quá hạn
+            List<String> expiredMaDons = em.createNativeQuery(
+                "SELECT maDonTreo FROM DonTreoDat WHERE ngayLap < :limit")
                 .setParameter("limit", limit)
                 .getResultList();
             
-            for (DonTreoDat d : hetHan) {
-                // Xóa vé tạm trước khi xóa đơn để tránh lỗi ràng buộc
-                em.createQuery("DELETE FROM ThongTinVeTam v WHERE v.donTreoDat.maDonTreo = :maDon")
-                  .setParameter("maDon", d.getMaDonTreo())
-                  .executeUpdate();
-                em.remove(d);
+            if (!expiredMaDons.isEmpty()) {
+                for (String maDon : expiredMaDons) {
+                    em.createNativeQuery("DELETE FROM ThongTinVeTam WHERE maDonTreo = :maDon")
+                        .setParameter("maDon", maDon)
+                        .executeUpdate();
+                    em.createNativeQuery("DELETE FROM DonTreoDat WHERE maDonTreo = :maDon")
+                        .setParameter("maDon", maDon)
+                        .executeUpdate();
+                }
+                System.out.println("⏰ SERVER: Đã dọn dẹp " + expiredMaDons.size() + " đơn treo quá hạn.");
             }
+            
             tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
-            e.printStackTrace();
+            System.err.println("❌ LỖI KHI DỌN DẸP ĐƠN QUÁ HẠN: " + e.getMessage());
         } finally {
             em.close();
         }
@@ -155,6 +160,7 @@ public class DonTreoServiceImpl extends UnicastRemoteObject implements IDonTreoS
         xoaDonHetHan();
         EntityManager em = emf.createEntityManager();
         try {
+            em.clear(); // ⚡ CLEAR CACHE để lấy dữ liệu mới nhất từ DB
             String sql = """
                 SELECT v.maChoNgoi
                 FROM ThongTinVeTam v
