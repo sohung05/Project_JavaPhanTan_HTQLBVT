@@ -102,7 +102,25 @@ public class KhachHangServiceImpl extends UnicastRemoteObject implements IKhachH
             KhachHang khTam = new KhachHang("PASSENGER", cccd, ten, "", "", "Hành khách");
             dsKH.add(khTam);
         }
-        
         return dsKH;
     }
+
+    @Override
+
+    public boolean existsByCccdOrSdtExcludingMa(String cccd, String sdt, String maKH) throws RemoteException {
+        try {
+            Long count = em.createQuery(
+                "SELECT COUNT(kh) FROM KhachHang kh WHERE (kh.CCCD = :cccd OR kh.SDT = :sdt) AND kh.maKH <> :maKH", 
+                Long.class)
+                .setParameter("cccd", cccd)
+                .setParameter("sdt", sdt)
+                .setParameter("maKH", maKH)
+                .getSingleResult();
+            return count > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
+

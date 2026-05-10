@@ -425,6 +425,12 @@ public class Gui_KhachHang extends JPanel {
         KhachHang kh = getKhachHangFromForm();
         if (kh != null) {
             try {
+                // Kiểm tra trùng CCCD hoặc SDT với khách hàng khác
+                if (khachHangService.existsByCccdOrSdtExcludingMa(kh.getCCCD(), kh.getSDT(), kh.getMaKH())) {
+                    JOptionPane.showMessageDialog(this, "Lỗi: Số CCCD hoặc Số điện thoại đã tồn tại cho một khách hàng khác!", "Lỗi trùng dữ liệu", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
                 if (khachHangService.sua(kh)) {
                     JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
                     loadData();
@@ -434,6 +440,7 @@ public class Gui_KhachHang extends JPanel {
             } catch (Exception e) { e.printStackTrace(); }
         }
     }
+
 
     private void btnXuatExcelActionPerformed(java.awt.event.ActionEvent evt) {
         JTableExporter.exportJTableToExcel(tblKhachHang);

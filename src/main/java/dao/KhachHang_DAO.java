@@ -123,4 +123,21 @@ public class KhachHang_DAO {
             return new ArrayList<>();
         }
     }
-}
+
+    public boolean existsByCccdOrSdtExcludingMa(String cccd, String sdt, String maKH) {
+
+        try {
+            Long count = em.createQuery(
+                "SELECT COUNT(kh) FROM KhachHang kh WHERE (kh.CCCD = :cccd OR kh.SDT = :sdt) AND kh.maKH <> :maKH", 
+                Long.class)
+                .setParameter("cccd", cccd)
+                .setParameter("sdt", sdt)
+                .setParameter("maKH", maKH)
+                .getSingleResult();
+            return count > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}
